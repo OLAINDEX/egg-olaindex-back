@@ -1,0 +1,28 @@
+'use strict';
+
+const path = require('path');
+const fse = require('fs-extra');
+const Controller = require('egg').Controller;
+const token = fse.readJsonSync(path.resolve(__dirname, './../../storage/access_token.json'));
+
+class HomeController extends Controller {
+  async index() {
+    const { ctx, service } = this;
+    try {
+      const accessToken = await service.token.getAccessToken(token);
+      const user = await service.graph.getUserDetails(accessToken);
+      let username = '';
+      if (user) {
+        username = user.displayName ? user.displayName : user.userPrincipalName;
+      }
+      await ctx.render('index', {
+        username,
+      });
+    } catch (error) {
+      ctx.logger.error(error);
+      ctx.body = ctx.helper.renderError(error.code);
+    }
+  }
+}
+
+module.exports = HomeController;
