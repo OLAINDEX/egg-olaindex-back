@@ -4,7 +4,7 @@ const path = require('path');
 const fse = require('fs-extra');
 const Controller = require('egg').Controller;
 const token = fse.readJsonSync(path.resolve(__dirname, './../../storage/access_token.json'));
-
+const share = fse.readJsonSync(path.resolve(__dirname, './../../storage/share_point.json'));
 class HomeController extends Controller {
   async index() {
     const { ctx, service } = this;
@@ -15,9 +15,7 @@ class HomeController extends Controller {
       if (user) {
         username = user.displayName ? user.displayName : user.userPrincipalName;
       }
-      await ctx.render('index', {
-        username,
-      });
+      ctx.body = `hello, ${username}`;
     } catch (error) {
       ctx.logger.error(error);
       ctx.body = ctx.helper.renderError(error.code);
@@ -27,7 +25,7 @@ class HomeController extends Controller {
   async test() {
     const { ctx, service } = this;
     const { path } = ctx.query;
-    const shareUrl = 'https://stuhausteducn-my.sharepoint.com/:f:/g/personal/king_stu_haust_edu_cn/EnRmnpfg7cROjXqAeKcAY3cBCT8Qrf6dlbCLQB4Sw1NKsA?e=dIElGP';
+    const shareUrl = share.shareUrl;
     const data = await service.share.list(path, shareUrl);
     const offset = (new Date().getTimezoneOffset() - data.RegionalSettingsTimeZoneBias || 0) * 60000;
     if (data.ListData.Row.length > 0) { // 文件夹
