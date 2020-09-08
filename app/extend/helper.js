@@ -1,4 +1,6 @@
 'use strict';
+const axios = require('axios');
+const mime = require('mime');
 
 const renderError = (message, secondaryMessage = 'Opps!') => {
   return `
@@ -58,9 +60,157 @@ const randomString = (len, charSet) => {
   return randomString;
 };
 
+
+const request = axios.create({
+  timeout: 10000,
+});
+request.interceptors.request.use(
+  config => {
+    config.url = encodeURI(config.url);
+    return config;
+  },
+  error => {
+    console.log(error);
+    return Promise.reject(error);
+  }
+);
+
+request.interceptors.response.use(
+  response => {
+    return response;
+  },
+  error => {
+    return Promise.reject(error);
+  }
+);
+
+
+const Response_file = (file, url = '?download') => {
+  return {
+    type: 0, // 0_file 固定值
+    statusCode: 200, // 200 固定值
+    data: {
+      file,
+      url,
+    },
+  };
+};
+
+const Response_list = (list, nextToken) => {
+  return {
+    type: 1, // 1_dir 固定值
+    statusCode: 200, // 固定值
+    data: {
+      list, nextToken,
+    },
+  };
+};
+
+const Response_info = (statusCode, info, headers) => {
+  const m = {
+    type: 2, // 2_info 固定值
+    statusCode, // enum: 200 301 401 403 404 500
+    headers,
+    data: {
+      info: info || statusCode,
+    },
+  };
+  return m;
+};
+
+const Response_html = (statusCode, html, headers) => {
+  return {
+    type: 3, // 3_html 固定值
+    statusCode, // enum: 200 301 401 403 404 500
+    headers: headers || { 'Content-Type': 'text/html' },
+    data: {
+      html, // html text
+    },
+  };
+};
+
+const Response_html_json = (statusCode, obj, headers) => {
+  return {
+    type: 3, // 3_html 固定值
+    statusCode,
+    headers: headers || { 'Content-Type': 'application/json' },
+    data: {
+      html: JSON.stringify(obj),
+    },
+  };
+};
+
+const Response_error = (statusCode, info, headers) => {
+  const m = {
+    type: 2,
+    statusCode,
+    headers,
+    data: {
+      info: info || statusCode,
+    },
+  };
+  const e = new Error(m.data.info);
+  return Object.assign(e, m);
+};
+
+const Response_download = async req => {
+  // if (authorization) headers.authorization = this.authorization;
+  // if (range) headers.range = this.range;
+  // @flag 以后支持导出下载链接
+  const res = await axios({ url: req.url, headers: req.headers, method: req.method || 'get', responseType: 'stream' });
+  return Response_html(res.status, res.data, res.headers);
+};
+
+const Response = {
+  file: Response_file,
+  list: Response_list,
+  info: Response_info,
+  html: Response_html,
+  html_json: Response_html_json,
+  error: Response_error,
+  down: Response_download,
+  constants: {
+    Incomplete_folder_path: 'Incomplete folder path',
+    No_such_command: 'No such command',
+    Just_for_mounting: 'Just for mounting |-_-',
+    Download_not_allowed: 'Download not allowed',
+    File_already_exists: 'File already exists',
+    Content_Range_is_invalid: 'Content-Range is invalid',
+    Offset_is_invalid: 'Offset is invalid',
+    Range_is_invalid: 'Range is invalid',
+    S404_not_found: '404 Not Found',
+    Permission_denied: 'Permission denied',
+    System_not_initialized: 'The system is not initialized',
+  },
+};
+
+const urlSpCharEncode = s => {
+  return !s ? s : s.replace(/%/g, '%25').replace(/#/g, '%23');
+};
+const formatSize = size => {
+  if (typeof size !== 'number') size = NaN;
+  let count = 0;
+  while (size >= 1024) {
+    size /= 1024;
+    count++;
+  }
+  size = size.toFixed(2);
+  size += [ ' B', ' KB', ' MB', ' GB', ' TB' ][count];
+  return size;
+};
+
+const getMime = path => {
+  return mime.getType(path) || 'application/vnd.onepoint.unknown';
+};
+
 module.exports = {
   renderError,
   timeFormat,
   checkIsJSON,
   randomString,
+  request,
+  Response,
+  formatSize,
+  urlSpCharEncode,
+  getMime,
 };

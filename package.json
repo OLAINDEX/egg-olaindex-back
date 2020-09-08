@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@microsoft/microsoft-graph-client": "^2.0.0",
+    "axios": "^0.20.0",
     "cache-manager-fs-hash": "^0.0.9",
     "cache-manager-redis-store": "^2.0.0",
     "egg": "^2.15.1",
@@ -16,6 +17,7 @@
     "fs-extra": "^9.0.1",
     "isomorphic-fetch": "^2.2.1",
     "lodash": "^4.17.20",
+    "mime": "^2.4.6",
     "moment": "^2.27.0",
     "simple-oauth2": "^4.1.0"
   },
