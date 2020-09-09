@@ -22,7 +22,7 @@ class HomeController extends Controller {
     }
   }
 
-  async test() {
+  async share() {
     const { ctx, service } = this;
     const { path } = ctx.query;
     const shareUrl = share.shareUrl;
