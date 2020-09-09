@@ -6,9 +6,25 @@ class ShareService extends Service {
   async parseShareParams(shareUrl) {
     const shareUrlReg = /https:\/\/([^/]*)\/:f:\/g\/personal\/([^/]*)/.exec(shareUrl);
     if (!shareUrlReg[1] || !shareUrlReg[2]) throw new Error('shareurl is invalid');
+    const { ctx } = this;
+    const opts = {
+      maxRedirects: 0,
+      validateStatus(status) {
+        return status >= 200 && status < 400;
+      },
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36',
+        Cookie: '',
+      },
+    };
+    const headers = (await ctx.helper.request.get(shareUrl, opts)).headers;
+    if (!headers['set-cookie']) throw new Error('This sharing link has been canceled');
+    this.logger.info('sharepoint cookie:' + headers['set-cookie'][0]);
+
     return {
       origin: shareUrlReg[1],
       account: shareUrlReg[2],
+      cookie: this.getCookie(shareUrl),
     };
   }
 
@@ -26,14 +42,13 @@ class ShareService extends Service {
     };
     const headers = (await ctx.helper.request.get(shareUrl, opts)).headers;
     if (!headers['set-cookie']) throw new Error('This sharing link has been canceled');
-    ctx.logger.info('sharepoint cookie:' + headers['set-cookie'][0]);
+    this.logger.info('sharepoint cookie:' + headers['set-cookie'][0]);
     return headers['set-cookie'][0];
   }
 
   async list(path, shareUrl) {
     const { ctx } = this;
-    const cookie = await this.getCookie(shareUrl);
-    const { account, origin } = await this.parseShareParams(shareUrl);
+    const { account, origin, cookie } = await this.parseShareParams(shareUrl);
     const url = `https://${origin}/personal/${account}/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream`;
     const opts = {
       params: {
@@ -79,7 +94,7 @@ class ShareService extends Service {
 
   async item(itemUrl, shareUrl) {
     const { ctx } = this;
-    const cookie = await this.getCookie(shareUrl);
+    const { cookie } = await this.parseShareParams(shareUrl);
     const opts = {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:69.0) Gecko/20100101 Firefox/69.0',
