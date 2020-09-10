@@ -4,8 +4,12 @@ const Service = require('egg').Service;
 
 class ShareService extends Service {
   async parseShareUrlParams(shareUrl) {
-    const shareUrlReg = /https:\/\/([^/]*)\/:f:\/g\/personal\/([^/]*)/.exec(shareUrl);
-    if (!shareUrlReg[1] || !shareUrlReg[2]) throw new Error('shareurl is invalid');
+    const shareUrlReg = /https:\/\/([^/]*)\/:f:\/g\/personal\/([^/]*)/.exec(
+      shareUrl
+    );
+    if (!shareUrlReg[1] || !shareUrlReg[2]) {
+      throw new Error('shareurl is invalid');
+    }
     const { ctx } = this;
     const opts = {
       maxRedirects: 0,
@@ -13,12 +17,15 @@ class ShareService extends Service {
         return status >= 200 && status < 400;
       },
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36',
         Cookie: '',
       },
     };
     const headers = (await ctx.helper.request.get(shareUrl, opts)).headers;
-    if (!headers['set-cookie']) throw new Error('This sharing link has been canceled');
+    if (!headers['set-cookie']) {
+      throw new Error('This sharing link has been canceled');
+    }
     this.logger.info('sharepoint cookie:' + headers['set-cookie'][0]);
 
     return {
@@ -36,19 +43,24 @@ class ShareService extends Service {
         return status >= 200 && status < 400;
       },
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36',
         Cookie: '',
       },
     };
     const headers = (await ctx.helper.request.get(shareUrl, opts)).headers;
-    if (!headers['set-cookie']) throw new Error('This sharing link has been canceled');
+    if (!headers['set-cookie']) {
+      throw new Error('This sharing link has been canceled');
+    }
     this.logger.info('sharepoint cookie:' + headers['set-cookie'][0]);
     return headers['set-cookie'][0];
   }
 
   async getAccessToken(shareUrl) {
     const { ctx } = this;
-    const { account, origin, cookie } = await this.parseShareUrlParams(shareUrl);
+    const { account, origin, cookie } = await this.parseShareUrlParams(
+      shareUrl
+    );
     const url = `https://${origin}/personal/${account}/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream`;
     const opts = {
       params: {
@@ -66,36 +78,30 @@ class ShareService extends Service {
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-origin',
         'x-serviceworker-strategy': 'CacheFirst',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36',
-        Cookie: cookie,
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36',
+        cookie,
       },
     };
     const data = {
       parameters: {
-        // eslint-disable-next-line no-multi-str
-        ViewXml: '<View ><Query><OrderBy><FieldRef Name="LinkFilename" Ascending="true"></FieldRef></OrderBy></Query><ViewFields>\
-  <FieldRef Name="CurrentFolderSpItemUrl"/>\
-  <FieldRef Name="FileLeafRef"/>\
-  <FieldRef Name="FSObjType"/>\
-  <FieldRef Name="SMLastModifiedDate"/>\
-  <FieldRef Name="SMTotalFileStreamSize"/>\
-  <FieldRef Name="SMTotalFileCount"/>\
-  </ViewFields><RowLimit Paged="TRUE">200</RowLimit></View>',
         __metadata: { type: 'SP.RenderListDataParameters' },
         RenderOptions: 1513223,
         AllowMultipleValueFilterForTaxonomyFields: true,
         AddRequiredFields: true,
       },
     };
-    const res = (await ctx.helper.request.post(url, data, opts));
-    const accessToken = res.ListSchema['.driveAccessToken'].slice(13);// access_token=
+    const res = await ctx.helper.request.post(url, data, opts);
+    const accessToken = res.ListSchema['.driveAccessToken'].slice(13); // access_token=
     const api_url = res.ListSchema['.driveUrl'] + '/';
     return { accessToken, api_url };
   }
 
   async list(path, shareUrl) {
     const { ctx } = this;
-    const { account, origin, cookie } = await this.parseShareUrlParams(shareUrl);
+    const { account, origin, cookie } = await this.parseShareUrlParams(
+      shareUrl
+    );
     const url = `https://${origin}/personal/${account}/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream`;
     const opts = {
       params: {
@@ -111,31 +117,24 @@ class ShareService extends Service {
         'content-type': 'application/json;odata=verbose',
         origin: 'https://' + origin,
         pragma: 'no-cache',
+        'sec-fetch-dest': 'empty',
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-origin',
         'x-serviceworker-strategy': 'CacheFirst',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36',
-        Cookie: cookie,
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36',
+        cookie,
       },
     };
     const data = {
       parameters: {
-        // eslint-disable-next-line no-multi-str
-        ViewXml: '<View ><Query><OrderBy><FieldRef Name="LinkFilename" Ascending="true"></FieldRef></OrderBy></Query><ViewFields>\
-  <FieldRef Name="CurrentFolderSpItemUrl"/>\
-  <FieldRef Name="FileLeafRef"/>\
-  <FieldRef Name="FSObjType"/>\
-  <FieldRef Name="SMLastModifiedDate"/>\
-  <FieldRef Name="SMTotalFileStreamSize"/>\
-  <FieldRef Name="SMTotalFileCount"/>\
-  </ViewFields><RowLimit Paged="TRUE">200</RowLimit></View>',
         __metadata: { type: 'SP.RenderListDataParameters' },
         RenderOptions: 1513223,
         AllowMultipleValueFilterForTaxonomyFields: true,
         AddRequiredFields: true,
       },
     };
-    const res = (await ctx.helper.request.post(url, data, opts));
+    const res = await ctx.helper.request.post(url, data, opts);
     return res.data;
   }
 
@@ -144,7 +143,8 @@ class ShareService extends Service {
     const { cookie } = await this.parseShareUrlParams(shareUrl);
     const opts = {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:69.0) Gecko/20100101 Firefox/69.0',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:69.0) Gecko/20100101 Firefox/69.0',
         Cookie: cookie,
       },
     };
