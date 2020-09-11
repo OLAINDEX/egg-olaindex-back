@@ -34,11 +34,9 @@ class ShareService extends Service {
     return headers['set-cookie'][0];
   }
 
-  async getAccessToken(shareUrl) {
+  async getAccessToken(params) {
     const { ctx } = this;
-    const { tenant, account, cookie } = await this.parseShareUrlParams(
-      shareUrl
-    );
+    const { tenant, account, cookie } = params;
     const url = `https://${tenant}/personal/${account}/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1='/personal/${account}/Documents'&RootFolder=/personal/${account}/Documents/&TryNewExperienceSingle=TRUE`;
     const res = await ctx.curl(url, {
       method: 'POST',
@@ -64,14 +62,13 @@ class ShareService extends Service {
     const accessToken = res.data.ListSchema['.driveAccessToken'].slice(13); // access_token=
     const api_url = res.data.ListSchema['.driveUrl'] + '/';
     const share_folder = (res.data.ListData.Row[0].FileRef).split('/').pop();
+    this.logger.info('sharepoint accessToken:' + accessToken);
     return { accessToken, api_url, share_folder };
   }
 
-  async list(path, shareUrl) {
+  async list(path, params) {
     const { ctx } = this;
-    const { account, tenant, cookie } = await this.parseShareUrlParams(
-      shareUrl
-    );
+    const { account, tenant, cookie } = params;
     const url = `https://${tenant}/personal/${account}/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1='/personal/${account}/Documents'&RootFolder=/personal/${account}/Documents/${path}&TryNewExperienceSingle=TRUE`;
     const res = await ctx.curl(url, {
       method: 'POST',
@@ -107,9 +104,9 @@ class ShareService extends Service {
     return res.data;
   }
 
-  async item(itemUrl, shareUrl) {
+  async item(itemUrl, params) {
     const { ctx } = this;
-    const { cookie } = await this.parseShareUrlParams(shareUrl);
+    const { cookie } = params;
     const res = await ctx.curl(itemUrl, {
       dataType: 'json',
       headers: {
