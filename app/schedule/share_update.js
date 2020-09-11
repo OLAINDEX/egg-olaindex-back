@@ -18,16 +18,14 @@ class ShareUpdate extends Subscription {
   // subscribe 是真正定时任务执行时被运行的函数
   async subscribe() {
     const shareUrl = share.shareUrl;
-
     const { ctx, service } = this;
-    ctx.logger.info(shareUrl);
     const params = await service.share.parseShareUrlParams(
       shareUrl
     );
-    ctx.logger.info(params);
     fse.writeJsonSync(
       path.resolve(__dirname, './../../storage/share_token.json'), params
     );
+    ctx.logger.info(params);
   }
 }
 
