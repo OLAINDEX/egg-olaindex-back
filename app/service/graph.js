@@ -10,12 +10,13 @@ const {
 require('isomorphic-fetch');
 
 class GraphService extends Service {
-  initAuthenticatedClient(accessToken, baseUrl) {
+  initAuthenticatedClient(accessToken, baseUrl, defaultVersion = 'v1.0') {
     const opts = {
       authProvider: done => {
         done(null, accessToken);
       },
       baseUrl,
+      defaultVersion,
     };
 
     const client = Client.init(opts);
@@ -41,15 +42,15 @@ class GraphService extends Service {
   }
 
   async getUserDetails(accessTokenObject) {
-    const { accessToken, baseUrl } = accessTokenObject;
-    const client = this.initAuthenticatedClient(accessToken, baseUrl);
+    const { accessToken, baseUrl, defaultVersion } = accessTokenObject;
+    const client = this.initAuthenticatedClient(accessToken, baseUrl, defaultVersion);
     const user = await client.api('/me').get();
     return user;
   }
 
   async getUserDrive(accessTokenObject) {
-    const { accessToken, baseUrl } = accessTokenObject;
-    const client = this.initAuthenticatedClient(accessToken, baseUrl);
+    const { accessToken, baseUrl, defaultVersion } = accessTokenObject;
+    const client = this.initAuthenticatedClient(accessToken, baseUrl, defaultVersion);
     const drive = await client.api('/me/drive').get();
     return drive;
   }
@@ -63,7 +64,7 @@ class GraphService extends Service {
       skip: '',
       expand: '',
     };
-    const { accessToken, baseUrl } = accessTokenObject;
+    const { accessToken, baseUrl, defaultVersion } = accessTokenObject;
     const { itemId, top, skip, expand } = Object.assign(
       {},
       defaultParams,
@@ -74,7 +75,7 @@ class GraphService extends Service {
     } else {
       endpoint = '/me/drive/root/children';
     }
-    const client = this.initAuthenticatedClient(accessToken, baseUrl);
+    const client = this.initAuthenticatedClient(accessToken, baseUrl, defaultVersion);
     const items = await client
       .api(endpoint)
       .top(top)
@@ -91,20 +92,20 @@ class GraphService extends Service {
       itemId: '',
       expand: '',
     };
-    const { accessToken, baseUrl } = accessTokenObject;
+    const { accessToken, baseUrl, defaultVersion } = accessTokenObject;
     const { itemId, expand } = Object.assign({}, defaultParams, params || {});
     if (itemId) {
       endpoint = `/me/drive/items/${itemId}`;
     } else {
       endpoint = '/me/drive/root';
     }
-    const client = this.initAuthenticatedClient(accessToken, baseUrl);
+    const client = this.initAuthenticatedClient(accessToken, baseUrl, defaultVersion);
     const item = await client.api(endpoint).expand(expand).get();
     return item;
   }
 
   async shareItem(accessTokenObject, params) {
-    const { accessToken, baseUrl } = accessTokenObject;
+    const { accessToken, baseUrl, defaultVersion } = accessTokenObject;
     const { itemId } = params;
     const endpoint = `/me/drive/items/${itemId}/createLink`;
     const date = new Date();
@@ -115,36 +116,36 @@ class GraphService extends Service {
         date.setDate(date.getDate() + 3)
       ).toISOString(),
     };
-    const client = this.initAuthenticatedClient(accessToken, baseUrl);
+    const client = this.initAuthenticatedClient(accessToken, baseUrl, defaultVersion);
     const data = await client.api(endpoint).post(body);
     return data;
   }
 
   async getItemPermissions(accessTokenObject, params) {
-    const { accessToken, baseUrl } = accessTokenObject;
+    const { accessToken, baseUrl, defaultVersion } = accessTokenObject;
     const { itemId } = params;
     const endpoint = `/me/drive/items/${itemId}/permissions`;
-    const client = this.initAuthenticatedClient(accessToken, baseUrl);
+    const client = this.initAuthenticatedClient(accessToken, baseUrl, defaultVersion);
     const data = await client.api(endpoint).get();
     return data;
   }
 
   async upload(accessTokenObject, file, params) {
-    const { accessToken, baseUrl } = accessTokenObject;
+    const { accessToken, baseUrl, defaultVersion } = accessTokenObject;
     let { path, fileName } = params;
     fileName = fileName.trim();
     path = this.convertPath(path);
     const endpoint = encodeURI(`/me/drive/root:/${path}${fileName}:/content`);
     const stream = fse.createReadStream(file);
-    const client = this.initAuthenticatedClient(accessToken, baseUrl);
+    const client = this.initAuthenticatedClient(accessToken, baseUrl, defaultVersion);
     const data = await client.api(endpoint).putStream(stream);
     return data;
   }
 
   async uploadResume(accessTokenObject, file, params) {
-    const { accessToken, baseUrl } = accessTokenObject;
+    const { accessToken, baseUrl, defaultVersion } = accessTokenObject;
     let { fileName, path } = params;
-    const client = this.initAuthenticatedClient(accessToken, baseUrl);
+    const client = this.initAuthenticatedClient(accessToken, baseUrl, defaultVersion);
     fileName = fileName.trim();
     const oneDriveLargeFileUpload = async (client, file, fileName, path) => {
       try {

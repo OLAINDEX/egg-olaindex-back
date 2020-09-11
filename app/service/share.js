@@ -40,7 +40,7 @@ class ShareService extends Service {
       shareUrl
     );
     const url = `https://${tenant}/personal/${account}/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1='/personal/${account}/Documents'&RootFolder=/personal/${account}/Documents/&TryNewExperienceSingle=TRUE`;
-    const res = await await ctx.curl(url, {
+    const res = await ctx.curl(url, {
       method: 'POST',
       contentType: 'json',
       dataType: 'json',
@@ -108,21 +108,6 @@ class ShareService extends Service {
   }
 
   async item(itemUrl, shareUrl) {
-    const { ctx } = this;
-    const { cookie } = await this.parseShareUrlParams(shareUrl);
-    const res = await ctx.curl(itemUrl, {
-      dataType: 'json',
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:69.0) Gecko/20100101 Firefox/69.0',
-        Cookie: cookie,
-      },
-      timeout: 5000,
-    });
-    return res.data;
-  }
-
-  async view(itemUrl, shareUrl) {
     const { ctx } = this;
     const { cookie } = await this.parseShareUrlParams(shareUrl);
     const res = await ctx.curl(itemUrl, {

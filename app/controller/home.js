@@ -28,14 +28,31 @@ class HomeController extends Controller {
 
   async test() {
     const { ctx, service } = this;
+    let { path } = ctx.query;
     const shareUrl = share.shareUrl;
-    const data = await service.share.getAccessToken(shareUrl);
-    ctx.body = data;
+    let { accessToken, api_url, share_folder } = await service.share.getAccessToken(shareUrl);
+
+    share_folder += '/';
+    path = ctx.helper.trim(path, '/');
+    if (!path) {
+      path = '';
+      share_folder = ctx.helper.trim(share_folder, '/');
+    }
+    try {
+      const client = service.graph.initAuthenticatedClient(accessToken, api_url, '');
+      const url = `/root:/${share_folder}${path}:/children`;
+      ctx.logger.info(url);
+      const data = await client.api(url).get();
+      ctx.body = data;
+    } catch (error) {
+      ctx.logger.error(error);
+      ctx.body = ctx.helper.renderError(error.code);
+    }
   }
 
   async share() {
     const { ctx, service } = this;
-    const { path } = ctx.query;
+    const { path, preview } = ctx.query;
     const shareUrl = share.shareUrl;
     const data = await service.share.list(path, shareUrl);
     const offset =
@@ -60,18 +77,25 @@ class HomeController extends Controller {
       shareUrl
     );
     if (!info.file) return ctx.helper.Response.list([]); // 空文件夹
-    ctx.body = ctx.helper.Response.file(
-      {
-        type: 0,
-        name: info.name,
-        size: info.size,
-        mime: info.file.mimeType,
-        time: new Date(
-          new Date(info.lastModifiedDateTime) - offset
-        ).toISOString(),
-      },
-      info['@content.downloadUrl']
-    );
+    if (preview) {
+      const data = await ctx.curl(info['@content.downloadUrl'], {
+        dataType: 'text',
+      });
+      ctx.body = data.data;
+    } else {
+      ctx.body = ctx.helper.Response.file(
+        {
+          type: 0,
+          name: info.name,
+          size: info.size,
+          mime: info.file.mimeType,
+          time: new Date(
+            new Date(info.lastModifiedDateTime) - offset
+          ).toISOString(),
+        },
+        info['@content.downloadUrl']
+      );
+    }
   }
 }
 
