@@ -10,45 +10,23 @@ class ShareService extends Service {
     if (!shareUrlReg[1] || !shareUrlReg[2]) {
       throw new Error('shareurl is invalid');
     }
-    const { ctx } = this;
-    const opts = {
-      maxRedirects: 0,
-      validateStatus(status) {
-        return status >= 200 && status < 400;
-      },
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36',
-        Cookie: '',
-      },
-    };
-    const headers = (await ctx.helper.request.get(shareUrl, opts)).headers;
-    if (!headers['set-cookie']) {
-      throw new Error('This sharing link has been canceled');
-    }
-    this.logger.info('sharepoint cookie:' + headers['set-cookie'][0]);
-
     return {
-      origin: shareUrlReg[1],
+      tenant: shareUrlReg[1],
       account: shareUrlReg[2],
-      cookie: this.getCookie(shareUrl),
+      cookie: await this.getCookie(shareUrl),
     };
   }
 
   async getCookie(shareUrl) {
     const { ctx } = this;
-    const opts = {
-      maxRedirects: 0,
-      validateStatus(status) {
-        return status >= 200 && status < 400;
-      },
+    const data = await ctx.curl(shareUrl, {
       headers: {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36',
         Cookie: '',
       },
-    };
-    const headers = (await ctx.helper.request.get(shareUrl, opts)).headers;
+    });
+    const headers = data.headers;
     if (!headers['set-cookie']) {
       throw new Error('This sharing link has been canceled');
     }
@@ -58,97 +36,104 @@ class ShareService extends Service {
 
   async getAccessToken(shareUrl) {
     const { ctx } = this;
-    const { account, origin, cookie } = await this.parseShareUrlParams(
+    const { tenant, account, cookie } = await this.parseShareUrlParams(
       shareUrl
     );
-    const url = `https://${origin}/personal/${account}/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream`;
-    const opts = {
-      params: {
-        '@a1': `'/personal/${account}/Documents'`,
-        TryNewExperienceSingle: 'TRUE',
-      },
+    const url = `https://${tenant}/personal/${account}/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1='/personal/${account}/Documents'&RootFolder=/personal/${account}/Documents/&TryNewExperienceSingle=TRUE`;
+    const res = await await ctx.curl(url, {
+      method: 'POST',
+      contentType: 'json',
+      dataType: 'json',
       headers: {
-        accept: 'application/json;odata=verbose',
-        'accept-encoding': 'gzip, deflate, br',
-        'accept-language': 'zh-CN',
-        'cache-control': 'no-cache',
-        'content-type': 'application/json;odata=verbose',
-        origin: 'https://' + origin,
-        pragma: 'no-cache',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-origin',
-        'x-serviceworker-strategy': 'CacheFirst',
+        Accept: 'application/json;odata=verbose',
+        'Content-Type': 'application/json;odata=verbose',
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36',
-        cookie,
+        Cookie: cookie,
       },
-    };
-    const data = {
-      parameters: {
-        __metadata: { type: 'SP.RenderListDataParameters' },
-        RenderOptions: 1513223,
-        AllowMultipleValueFilterForTaxonomyFields: true,
-        AddRequiredFields: true,
+      data: {
+        parameters: {
+          __metadata: { type: 'SP.RenderListDataParameters' },
+          RenderOptions: 1513223,
+          AllowMultipleValueFilterForTaxonomyFields: true,
+          AddRequiredFields: true,
+        },
       },
-    };
-    const res = await ctx.helper.request.post(url, data, opts);
-    const accessToken = res.ListSchema['.driveAccessToken'].slice(13); // access_token=
-    const api_url = res.ListSchema['.driveUrl'] + '/';
-    return { accessToken, api_url };
+      timeout: 5000,
+    });
+    const accessToken = res.data.ListSchema['.driveAccessToken'].slice(13); // access_token=
+    const api_url = res.data.ListSchema['.driveUrl'] + '/';
+    const share_folder = (res.data.ListData.Row[0].FileRef).split('/').pop();
+    return { accessToken, api_url, share_folder };
   }
 
   async list(path, shareUrl) {
     const { ctx } = this;
-    const { account, origin, cookie } = await this.parseShareUrlParams(
+    const { account, tenant, cookie } = await this.parseShareUrlParams(
       shareUrl
     );
-    const url = `https://${origin}/personal/${account}/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream`;
-    const opts = {
-      params: {
-        '@a1': `'/personal/${account}/Documents'`,
-        RootFolder: `/personal/${account}/Documents${path}`,
-        TryNewExperienceSingle: 'TRUE',
-      },
+    const url = `https://${tenant}/personal/${account}/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1='/personal/${account}/Documents'&RootFolder=/personal/${account}/Documents/${path}&TryNewExperienceSingle=TRUE`;
+    const res = await ctx.curl(url, {
+      method: 'POST',
+      contentType: 'json',
+      dataType: 'json',
       headers: {
-        accept: 'application/json;odata=verbose',
-        'accept-encoding': 'gzip, deflate, br',
-        'accept-language': 'zh-CN',
-        'cache-control': 'no-cache',
-        'content-type': 'application/json;odata=verbose',
-        origin: 'https://' + origin,
-        pragma: 'no-cache',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-origin',
-        'x-serviceworker-strategy': 'CacheFirst',
+        Accept: 'application/json;odata=verbose',
+        'Content-Type': 'application/json;odata=verbose',
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36',
-        cookie,
+        Cookie: cookie,
       },
-    };
-    const data = {
-      parameters: {
-        __metadata: { type: 'SP.RenderListDataParameters' },
-        RenderOptions: 1513223,
-        AllowMultipleValueFilterForTaxonomyFields: true,
-        AddRequiredFields: true,
+      data: {
+        parameters: {
+          ViewXml:
+            // eslint-disable-next-line no-multi-str
+            '<View ><Query><OrderBy><FieldRef Name="LinkFilename" Ascending="true"></FieldRef></OrderBy></Query><ViewFields>\
+                <FieldRef Name="CurrentFolderSpItemUrl"/>\
+                <FieldRef Name="FileLeafRef"/>\
+                <FieldRef Name="FSObjType"/>\
+                <FieldRef Name="SMLastModifiedDate"/>\
+                <FieldRef Name="SMTotalFileStreamSize"/>\
+                <FieldRef Name="SMTotalFileCount"/>\
+                </ViewFields><RowLimit Paged="TRUE">200</RowLimit></View>',
+          __metadata: { type: 'SP.RenderListDataParameters' },
+          RenderOptions: 1513223,
+          AllowMultipleValueFilterForTaxonomyFields: true,
+          AddRequiredFields: true,
+        },
       },
-    };
-    const res = await ctx.helper.request.post(url, data, opts);
+      timeout: 5000,
+    });
     return res.data;
   }
 
   async item(itemUrl, shareUrl) {
     const { ctx } = this;
     const { cookie } = await this.parseShareUrlParams(shareUrl);
-    const opts = {
+    const res = await ctx.curl(itemUrl, {
+      dataType: 'json',
       headers: {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:69.0) Gecko/20100101 Firefox/69.0',
         Cookie: cookie,
       },
-    };
-    const res = await ctx.helper.request.get(itemUrl, opts);
+      timeout: 5000,
+    });
+    return res.data;
+  }
+
+  async view(itemUrl, shareUrl) {
+    const { ctx } = this;
+    const { cookie } = await this.parseShareUrlParams(shareUrl);
+    const res = await ctx.curl(itemUrl, {
+      dataType: 'json',
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:69.0) Gecko/20100101 Firefox/69.0',
+        Cookie: cookie,
+      },
+      timeout: 5000,
+    });
     return res.data;
   }
 }

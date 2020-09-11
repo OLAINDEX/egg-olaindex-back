@@ -60,31 +60,6 @@ const randomString = (len, charSet) => {
   return randomString;
 };
 
-
-const request = axios.create({
-  timeout: 10000,
-});
-request.interceptors.request.use(
-  config => {
-    config.url = encodeURI(config.url);
-    return config;
-  },
-  error => {
-    console.log(error);
-    return Promise.reject(error);
-  }
-);
-
-request.interceptors.response.use(
-  response => {
-    return response;
-  },
-  error => {
-    return Promise.reject(error);
-  }
-);
-
-
 const Response_file = (file, url = '?download') => {
   return {
     type: 0, // 0_file 固定值
@@ -208,7 +183,6 @@ module.exports = {
   timeFormat,
   checkIsJSON,
   randomString,
-  request,
   Response,
   formatSize,
   urlSpCharEncode,
