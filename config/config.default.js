@@ -79,10 +79,18 @@ module.exports = appInfo => {
     },
   };
 
+  const view = {
+    defaultViewEngine: 'nunjucks',
+    mapping: {
+      '.nj': 'nunjucks',
+    },
+  };
+
   return {
     ...config,
     ...userConfig,
     cache,
+    view,
     oauth2,
     oauth2_cn,
   };

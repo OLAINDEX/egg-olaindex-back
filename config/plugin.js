@@ -10,4 +10,8 @@ module.exports = {
     enable: true,
     package: 'egg-cache',
   },
+  nunjucks: {
+    enable: true,
+    package: 'egg-view-nunjucks',
+  },
 };

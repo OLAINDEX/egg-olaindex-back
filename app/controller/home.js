@@ -23,6 +23,12 @@ class HomeController extends Controller {
     }
   }
 
+
+  async page() {
+    const ctx = this.ctx;
+    await ctx.render('test.nj', { name: 'egg' });
+  }
+
 }
 
 module.exports = HomeController;
