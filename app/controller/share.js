@@ -9,7 +9,8 @@ const token = fse.readJsonSync(
 class ShareController extends Controller {
   async index() {
     const { ctx, service } = this;
-    const { path, preview } = ctx.query;
+    let { path, preview } = ctx.query;
+    path = ctx.helper.trim(path, '/');
     const data = await service.share.list(path, token);
     const offset =
       (new Date().getTimezoneOffset() - data.RegionalSettingsTimeZoneBias ||
@@ -27,30 +28,31 @@ class ShareController extends Controller {
         });
       });
       ctx.body = ctx.helper.Response.list(list);
-    } // 文件 或 空文件夹
-    const info = await service.share.item(
-      data.ListData.CurrentFolderSpItemUrl,
-      token
-    );
-    if (!info.file) return ctx.helper.Response.list([]); // 空文件夹
-    if (preview) {
-      const data = await ctx.curl(info['@content.downloadUrl'], {
-        dataType: 'text',
-      });
-      ctx.body = data.data;
     } else {
-      ctx.body = ctx.helper.Response.file(
-        {
-          type: 0,
-          name: info.name,
-          size: info.size,
-          mime: info.file.mimeType,
-          time: new Date(
-            new Date(info.lastModifiedDateTime) - offset
-          ).toISOString(),
-        },
-        info['@content.downloadUrl']
+      const info = await service.share.item(
+        data.ListData.CurrentFolderSpItemUrl,
+        token
       );
+      if (!info.file) return ctx.helper.Response.list([]); // 空文件夹
+      if (preview) {
+        const data = await ctx.curl(info['@content.downloadUrl'], {
+          dataType: 'text',
+        });
+        ctx.body = data.data;
+      } else {
+        ctx.body = ctx.helper.Response.file(
+          {
+            type: 0,
+            name: info.name,
+            size: info.size,
+            mime: info.file.mimeType,
+            time: new Date(
+              new Date(info.lastModifiedDateTime) - offset
+            ).toISOString(),
+          },
+          info['@content.downloadUrl']
+        );
+      }
     }
   }
 
