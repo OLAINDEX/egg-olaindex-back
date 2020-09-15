@@ -3,7 +3,9 @@
 const path = require('path');
 const fse = require('fs-extra');
 const Controller = require('egg').Controller;
-const token = fse.readJsonSync(path.resolve(__dirname, './../../storage/access_token.json'));
+const token = fse.readJsonSync(
+  path.resolve(__dirname, './../../storage/access_token.json')
+);
 
 class ApiController extends Controller {
   async getMe() {

@@ -49,7 +49,10 @@ class AuthController extends Controller {
       if (type === 'cn') {
         token = Object.assign({}, token, { type: 'cn' });
       }
-      fse.writeJsonSync(path.resolve(__dirname, './../../storage/access_token.json'), token);
+      fse.writeJsonSync(
+        path.resolve(__dirname, './../../storage/access_token.json'),
+        token
+      );
       ctx.logger.info(token);
       ctx.logger.info('Access Token Success');
     } catch (error) {
