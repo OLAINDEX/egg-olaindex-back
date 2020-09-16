@@ -86,6 +86,11 @@ module.exports = appInfo => {
     },
   };
 
+  const cors = {
+    origin: '*',
+    allowMethods: 'GET,HEAD,PUT,POST,DELETE,PATCH',
+  };
+
   return {
     ...config,
     ...userConfig,
@@ -93,5 +98,6 @@ module.exports = appInfo => {
     view,
     oauth2,
     oauth2_cn,
+    cors,
   };
 };

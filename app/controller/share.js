@@ -22,7 +22,7 @@ class ShareController extends Controller {
         list.push({
           type: Number(e.FSObjType),
           name: e.LinkFilename,
-          size: Number(e.SMTotalFileStreamSize),
+          size: ctx.helper.formatSize(Number(e.SMTotalFileStreamSize)),
           mime: Number(e.FSObjType) ? '' : ctx.helper.getMime(e.LinkFilename),
           time: new Date(new Date(e.SMLastModifiedDate) - offset).toISOString(),
         });
@@ -44,7 +44,7 @@ class ShareController extends Controller {
           {
             type: 0,
             name: info.name,
-            size: info.size,
+            size: ctx.helper.formatSize(Number(info.size)),
             mime: info.file.mimeType,
             time: new Date(
               new Date(info.lastModifiedDateTime) - offset
