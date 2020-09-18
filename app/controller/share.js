@@ -18,63 +18,71 @@ class ShareController extends Controller {
       },
       60,
     )
-    if (data.ListData.Row.length > 0) {
-      // 文件夹
-      const list = []
-      data.ListData.Row.forEach((e) => {
-        list.push({
-          type: Number(e.FSObjType),
-          name: e.LinkFilename,
-          size: ctx.helper.formatSize(Number(e.SMTotalFileStreamSize)),
-          mime: Number(e.FSObjType) ? '' : ctx.helper.getMime(e.LinkFilename),
-          time: dayjs(e.SMLastModifiedDate).format('YYYY-MM-DD HH:mm:ss'),
-        })
-      })
-      const info = await app.cache.get(
-        `share:item:${path}`,
-        async () => {
-          return await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
-        },
-        60,
-      )
-      if (info.file) ctx.body = service.response.success()
-      const item = {
-        type: 1,
-        name: info.name,
-        size: ctx.helper.formatSize(Number(info.size)),
-        time: dayjs(info.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
-        childCount: info.folder.childCount,
-      }
-      ctx.body = service.response.success({list, item})
-    } else {
-      const info = await app.cache.get(
-        `share:item:${path}`,
-        async () => {
-          return await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
-        },
-        60,
-      )
-      if (!info.file) ctx.body = service.response.success() // 空文件夹
+    if (data.error) {
       if (preview) {
-        const content = await app.cache.get(
-          `share:content:${path}`,
+        ctx.body = ''
+      } else {
+        ctx.body = service.response.success()
+      }
+    } else {
+      if (data.ListData.Row.length > 0) {
+        // 文件夹
+        const list = []
+        data.ListData.Row.forEach((e) => {
+          list.push({
+            type: Number(e.FSObjType),
+            name: e.LinkFilename,
+            size: ctx.helper.formatSize(Number(e.SMTotalFileStreamSize)),
+            mime: Number(e.FSObjType) ? '' : ctx.helper.getMime(e.LinkFilename),
+            time: dayjs(e.SMLastModifiedDate).format('YYYY-MM-DD HH:mm:ss'),
+          })
+        })
+        const info = await app.cache.get(
+          `share:item:${path}`,
           async () => {
-            return await ctx.curl(info['@content.downloadUrl'], {
-              dataType: 'text',
-            })
+            return await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
           },
           60,
         )
-        ctx.body = marked(content.data)
-      } else {
-        ctx.body = service.response.success({
-          type: 0,
+        if (info.file) ctx.body = service.response.success()
+        const item = {
+          type: 1,
           name: info.name,
           size: ctx.helper.formatSize(Number(info.size)),
-          mime: info.file.mimeType,
           time: dayjs(info.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
-          url: info['@content.downloadUrl'],
-        })
+          childCount: info.folder.childCount,
+        }
+        ctx.body = service.response.success({list, item})
+      } else {
+        const info = await app.cache.get(
+          `share:item:${path}`,
+          async () => {
+            return await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
+          },
+          60,
+        )
+        if (!info.file) ctx.body = service.response.success() // 空文件夹
+        if (preview) {
+          const content = await app.cache.get(
+            `share:content:${path}`,
+            async () => {
+              return await ctx.curl(info['@content.downloadUrl'], {
+                dataType: 'text',
+              })
+            },
+            60,
+          )
+          ctx.body = marked(content.data)
+        } else {
+          ctx.body = service.response.success({
+            type: 0,
+            name: info.name,
+            size: ctx.helper.formatSize(Number(info.size)),
+            mime: info.file.mimeType,
+            time: dayjs(info.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
+            url: info['@content.downloadUrl'],
+          })
+        }
       }
     }
   }
