@@ -8,10 +8,16 @@ const token = fs.readJsonSync(path.resolve(__dirname, './../../storage/share_tok
 const marked = require('marked')
 class ShareController extends Controller {
   async index() {
-    const {ctx, service} = this
+    const {ctx, service, app} = this
     let {path, preview} = ctx.query
     path = token.share_folder + '/' + ctx.helper.trim(path, '/')
-    const data = await service.share.list(path, token)
+    const data = await app.cache.get(
+      `share:list:${path}`,
+      async () => {
+        return await service.share.list(path, token)
+      },
+      60,
+    )
     if (data.ListData.Row.length > 0) {
       // 文件夹
       const list = []
@@ -24,7 +30,13 @@ class ShareController extends Controller {
           time: dayjs(e.SMLastModifiedDate).format('YYYY-MM-DD HH:mm:ss'),
         })
       })
-      const info = await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
+      const info = await app.cache.get(
+        `share:item:${path}`,
+        async () => {
+          return await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
+        },
+        60,
+      )
       if (info.file) ctx.body = service.response.success()
       const item = {
         type: 1,
@@ -35,13 +47,25 @@ class ShareController extends Controller {
       }
       ctx.body = service.response.success({list, item})
     } else {
-      const info = await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
+      const info = await app.cache.get(
+        `share:item:${path}`,
+        async () => {
+          return await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
+        },
+        60,
+      )
       if (!info.file) ctx.body = service.response.success() // 空文件夹
       if (preview) {
-        const data = await ctx.curl(info['@content.downloadUrl'], {
-          dataType: 'text',
-        })
-        ctx.body = marked(data.data)
+        const content = await app.cache.get(
+          `share:content:${path}`,
+          async () => {
+            return await ctx.curl(info['@content.downloadUrl'], {
+              dataType: 'text',
+            })
+          },
+          60,
+        )
+        ctx.body = marked(content.data)
       } else {
         ctx.body = service.response.success({
           type: 0,
