@@ -5,11 +5,12 @@ const fs = require('fs-extra')
 const dayjs = require('dayjs')
 const Controller = require('egg').Controller
 const token = fs.readJsonSync(path.resolve(__dirname, './../../storage/share_token.json'))
+const marked = require('marked')
 class ShareController extends Controller {
   async index() {
     const {ctx, service} = this
     let {path, preview} = ctx.query
-    path = ctx.helper.trim(path, '/')
+    path = token.share_folder + '/' + ctx.helper.trim(path, '/')
     const data = await service.share.list(path, token)
     if (data.ListData.Row.length > 0) {
       // 文件夹
@@ -23,7 +24,16 @@ class ShareController extends Controller {
           time: dayjs(e.SMLastModifiedDate).format('YYYY-MM-DD HH:mm:ss'),
         })
       })
-      ctx.body = service.response.success({list})
+      const info = await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
+      if (info.file) ctx.body = service.response.success()
+      const item = {
+        type: 1,
+        name: info.name,
+        size: ctx.helper.formatSize(Number(info.size)),
+        time: dayjs(info.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
+        childCount: info.folder.childCount,
+      }
+      ctx.body = service.response.success({list, item})
     } else {
       const info = await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
       if (!info.file) ctx.body = service.response.success() // 空文件夹
@@ -31,18 +41,16 @@ class ShareController extends Controller {
         const data = await ctx.curl(info['@content.downloadUrl'], {
           dataType: 'text',
         })
-        ctx.body = data.data
+        ctx.body = marked(data.data)
       } else {
-        ctx.body = service.response.success(
-          {
-            type: 0,
-            name: info.name,
-            size: ctx.helper.formatSize(Number(info.size)),
-            mime: info.file.mimeType,
-            time: dayjs(info.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
-          },
-          info['@content.downloadUrl'],
-        )
+        ctx.body = service.response.success({
+          type: 0,
+          name: info.name,
+          size: ctx.helper.formatSize(Number(info.size)),
+          mime: info.file.mimeType,
+          time: dayjs(info.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
+          url: info['@content.downloadUrl'],
+        })
       }
     }
   }

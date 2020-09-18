@@ -36,8 +36,8 @@ class ApiController extends Controller {
       const {itemId, skip, top, expand} = ctx.query
       const params = {itemId, skip, top, expand}
       const accessToken = await service.token.getAccessToken(token)
-      const user = await service.graph.getItems(accessToken, params)
-      ctx.body = user
+      const items = await service.graph.getItems(accessToken, params)
+      ctx.body = items
     } catch (error) {
       ctx.logger.error(error)
       ctx.body = ctx.helper.renderError(error.code)
@@ -50,8 +50,8 @@ class ApiController extends Controller {
       const {itemId, expand} = ctx.query
       const params = {itemId, expand}
       const accessToken = await service.token.getAccessToken(token)
-      const user = await service.graph.getItem(accessToken, params)
-      ctx.body = user
+      const item = await service.graph.getItem(accessToken, params)
+      ctx.body = item
     } catch (error) {
       ctx.logger.error(error)
       ctx.body = ctx.helper.renderError(error.code)
