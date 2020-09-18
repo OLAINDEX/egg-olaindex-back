@@ -1,25 +1,25 @@
 /* eslint valid-jsdoc: "off" */
 
-'use strict';
+'use strict'
 
-const fsStore = require('cache-manager-fs-hash');
-const redisStore = require('cache-manager-redis-store');
+const fsStore = require('cache-manager-fs-hash')
+const redisStore = require('cache-manager-redis-store')
 
 /**
  * @param {Egg.EggAppInfo} appInfo app info
  */
-module.exports = appInfo => {
+module.exports = (appInfo) => {
   /**
    * built-in config
    * @type {Egg.EggAppConfig}
    **/
-  const config = (exports = {});
+  const config = (exports = {})
 
   // use for cookie sign key, should change to your own and keep security
-  config.keys = appInfo.name + '_1599525172557_9843';
+  config.keys = appInfo.name + '_1599525172557_9843'
 
   // add your middleware config here
-  config.middleware = [];
+  config.middleware = []
 
   // add your user config here
   const userConfig = {
@@ -27,7 +27,7 @@ module.exports = appInfo => {
     scope: 'offline_access user.read files.readwrite.all',
     rest_endpoint: 'https://graph.microsoft.com/',
     rest_endpoint_cn: 'https://microsoftgraph.chinacloudapi.cn/',
-  };
+  }
 
   const cache = {
     default: 'fs',
@@ -53,7 +53,7 @@ module.exports = appInfo => {
         ttl: 600,
       },
     },
-  };
+  }
 
   const oauth2 = {
     client: {
@@ -65,7 +65,7 @@ module.exports = appInfo => {
       authorizePath: 'oauth2/v2.0/authorize',
       tokenPath: 'oauth2/v2.0/token',
     },
-  };
+  }
 
   const oauth2_cn = {
     client: {
@@ -77,19 +77,19 @@ module.exports = appInfo => {
       authorizePath: 'oauth2/authorize',
       tokenPath: 'oauth2/token',
     },
-  };
+  }
 
   const view = {
     defaultViewEngine: 'nunjucks',
     mapping: {
-      '.nj': 'nunjucks',
+      '.tpl': 'nunjucks',
     },
-  };
+  }
 
   const cors = {
     origin: '*',
     allowMethods: 'GET,HEAD,PUT,POST,DELETE,PATCH',
-  };
+  }
 
   return {
     ...config,
@@ -99,5 +99,5 @@ module.exports = appInfo => {
     oauth2,
     oauth2_cn,
     cors,
-  };
-};
+  }
+}

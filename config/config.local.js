@@ -1,7 +1,6 @@
 /* eslint valid-jsdoc: "off" */
 
-'use strict';
-
+'use strict'
 
 /**
  * @param {Egg.EggAppInfo} appInfo app info
@@ -13,4 +12,4 @@ module.exports = {
     rest_endpoint: 'https://graph.microsoft.com/',
     rest_endpoint_cn: 'https://microsoftgraph.chinacloudapi.cn/',
   },
-};
+}

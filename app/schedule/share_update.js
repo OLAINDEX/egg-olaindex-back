@@ -1,9 +1,9 @@
 'use strict';
 
 const path = require('path');
-const fse = require('fs-extra');
+const fs = require('fs-extra');
 const Subscription = require('egg').Subscription;
-const share = fse.readJsonSync(
+const share = fs.readJsonSync(
   path.resolve(__dirname, './../../storage/share_conf.json')
 );
 class ShareUpdate extends Subscription {
@@ -22,7 +22,7 @@ class ShareUpdate extends Subscription {
     const params = await service.share.parseShareUrlParams(
       shareUrl
     );
-    fse.writeJsonSync(
+    fs.writeJsonSync(
       path.resolve(__dirname, './../../storage/share_token.json'), params
     );
     ctx.logger.info(params);
