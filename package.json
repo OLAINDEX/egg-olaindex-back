@@ -9,7 +9,7 @@
   "dependencies": {
     "@microsoft/microsoft-graph-client": "^2.0.0",
     "cache-manager-fs-hash": "^0.0.9",
-    "cache-manager-redis-store": "^2.0.0",
+    "cache-manager-ioredis": "^2.1.0",
     "dayjs": "^1.8.36",
     "egg": "^2.15.1",
     "egg-cache": "^0.0.7",

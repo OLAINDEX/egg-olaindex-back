@@ -15,7 +15,7 @@ module.exports = (app) => {
   router.get('/auth/callback', controller.auth.callback)
   router.get('/api/me', controller.api.getMe)
   router.get('/api/drive', controller.api.getDrive)
-  router.get('/api/list', controller.api.getItems)
-  router.get('/api/item', controller.api.getItem)
+  router.get('/api/drive/list', controller.api.getItems)
+  router.get('/api//drive/item', controller.api.getItem)
   router.get('/cache/clear', controller.cache.clear)
 }

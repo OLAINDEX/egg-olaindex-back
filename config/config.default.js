@@ -3,7 +3,7 @@
 'use strict'
 
 const fsStore = require('cache-manager-fs-hash')
-const redisStore = require('cache-manager-redis-store')
+const redisStore = require('cache-manager-ioredis')
 
 /**
  * @param {Egg.EggAppInfo} appInfo app info
@@ -30,7 +30,7 @@ module.exports = (appInfo) => {
   }
 
   const cache = {
-    default: 'fs',
+    default: 'redis',
     stores: {
       memory: {
         driver: 'memory',
@@ -51,6 +51,7 @@ module.exports = (appInfo) => {
         auth_pass: '',
         db: 0,
         ttl: 600,
+        valid: (_) => _ !== null,
       },
     },
   }

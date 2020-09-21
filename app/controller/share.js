@@ -16,7 +16,7 @@ class ShareController extends Controller {
       async () => {
         return await service.share.list(path, token)
       },
-      60,
+      300,
     )
     if (data.error) {
       if (preview) {
@@ -42,7 +42,7 @@ class ShareController extends Controller {
           async () => {
             return await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
           },
-          60,
+          300,
         )
         if (info.file) ctx.body = service.response.success()
         const item = {
@@ -59,7 +59,7 @@ class ShareController extends Controller {
           async () => {
             return await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
           },
-          60,
+          300,
         )
         if (!info.file) ctx.body = service.response.success() // 空文件夹
         if (preview) {
@@ -70,7 +70,7 @@ class ShareController extends Controller {
                 dataType: 'text',
               })
             },
-            60,
+            300,
           )
           ctx.body = marked(content.data)
         } else {
