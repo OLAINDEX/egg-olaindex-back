@@ -101,7 +101,6 @@ class ShareController extends Controller {
     try {
       const client = service.graph.initAuthenticatedClient(accessToken, api_url, '')
       const url = `/root:/${share_folder}${path}:/children`
-      ctx.logger.info(url)
       const data = await client.api(url).get()
       ctx.body = service.response.success(data)
     } catch (error) {
