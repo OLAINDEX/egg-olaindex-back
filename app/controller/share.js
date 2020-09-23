@@ -6,13 +6,14 @@ const dayjs = require('dayjs')
 const Controller = require('egg').Controller
 const token = fs.readJsonSync(path.resolve(__dirname, './../../storage/share_token.json'))
 const marked = require('marked')
+const {map, filter} = require('lodash')
 class ShareController extends Controller {
   async index() {
     const {ctx, service, app} = this
     let {path, preview} = ctx.query
     path = token.share_folder + '/' + ctx.helper.trim(path, '/')
     const data = await app.cache.get(
-      `share:list:${path}`,
+      ctx.helper.hash(`share:list:${path}`),
       async () => {
         return await service.share.list(path, token)
       },
@@ -27,18 +28,21 @@ class ShareController extends Controller {
     } else {
       if (data.ListData.Row.length > 0) {
         // 文件夹
-        const list = []
-        data.ListData.Row.forEach((e) => {
-          list.push({
+        const rows = map(data.ListData.Row, (e) => {
+          return {
             type: Number(e.FSObjType),
             name: e.LinkFilename,
             size: ctx.helper.formatSize(Number(e.SMTotalFileStreamSize)),
             mime: Number(e.FSObjType) ? '' : ctx.helper.getMime(e.LinkFilename),
             time: dayjs(e.SMLastModifiedDate).format('YYYY-MM-DD HH:mm:ss'),
-          })
+          }
+        })
+        ctx.logger.info(rows)
+        const list = filter(rows, (row) => {
+          return !ctx.helper.in_array(row.name, ['README.md', 'HEAD.md', '.password'], false)
         })
         const info = await app.cache.get(
-          `share:item:${path}`,
+          ctx.helper.hash(`share:item:${path}`),
           async () => {
             return await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
           },
@@ -55,7 +59,7 @@ class ShareController extends Controller {
         ctx.body = service.response.success({list, item})
       } else {
         const info = await app.cache.get(
-          `share:item:${path}`,
+          ctx.helper.hash(`share:item:${path}`),
           async () => {
             return await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
           },
@@ -64,7 +68,7 @@ class ShareController extends Controller {
         if (!info.file) ctx.body = service.response.success() // 空文件夹
         if (preview) {
           const content = await app.cache.get(
-            `share:content:${path}`,
+            ctx.helper.hash(`share:content:${path}`),
             async () => {
               return await ctx.curl(info['@content.downloadUrl'], {
                 dataType: 'text',
@@ -72,7 +76,7 @@ class ShareController extends Controller {
             },
             300,
           )
-          ctx.body = marked(content.data)
+          ctx.body = ctx.helper.getMime(info.name) === 'text/markdown' ? marked(content.data) : content.data
         } else {
           ctx.body = service.response.success({
             type: 0,
