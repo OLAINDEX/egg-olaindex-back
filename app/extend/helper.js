@@ -87,24 +87,6 @@ const trim = (str, char, type) => {
 }
 
 const in_array = (needle, haystack, argStrict) => {
-  // eslint-disable-line camelcase
-  //  discuss at: https://locutus.io/php/in_array/
-  // original by: Kevin van Zonneveld (https://kvz.io)
-  // improved by: vlado houba
-  // improved by: Jonas Sciangula Street (Joni2Back)
-  //    input by: Billy
-  // bugfixed by: Brett Zamir (https://brett-zamir.me)
-  //   example 1: in_array('van', ['Kevin', 'van', 'Zonneveld'])
-  //   returns 1: true
-  //   example 2: in_array('vlado', {0: 'Kevin', vlado: 'van', 1: 'Zonneveld'})
-  //   returns 2: false
-  //   example 3: in_array(1, ['1', '2', '3'])
-  //   example 3: in_array(1, ['1', '2', '3'], false)
-  //   returns 3: true
-  //   returns 3: true
-  //   example 4: in_array(1, ['1', '2', '3'], true)
-  //   returns 4: false
-
   let key = ''
   const strict = !!argStrict
 
@@ -140,6 +122,49 @@ const hash = (key, prefix = 'eggjs') => {
   )
 }
 
+const defaultValue = (value, defaultValue) => {
+  switch (value) {
+    case 'null':
+    case 'undefined':
+    case null:
+    case undefined:
+    case '':
+      return defaultValue
+    default:
+      return value
+  }
+}
+
+const getQueryVariable = (url) => {
+  const query = {}
+  if (!url) {
+    return query
+  }
+  if (url.indexOf('?') !== -1) {
+    const str = url.substr(1)
+    const pairs = str.split('&')
+    for (let i = 0; i < pairs.length; i++) {
+      const pair = pairs[i].split('=')
+      query[pair[0]] = pair[1]
+    }
+  }
+  return query
+}
+
+const updateQueryStringParameter = (uri, key, value) => {
+  if (!value) {
+    return uri
+  }
+  const re = new RegExp('([?&])' + key + '=.*?(&|$)', 'i')
+  const separator = uri.indexOf('?') !== -1 ? '&' : '?'
+  if (uri.match(re)) {
+    return uri.replace(re, '$1' + key + '=' + value + '$2')
+  }
+  return uri + separator + key + '=' + value
+}
+
+const isEmpty = (obj) => [Object, Array].includes((obj || {}).constructor) && !Object.entries(obj || {}).length
+
 module.exports = {
   renderError,
   timeFormat,
@@ -151,4 +176,8 @@ module.exports = {
   trim,
   in_array,
   hash,
+  defaultValue,
+  getQueryVariable,
+  updateQueryStringParameter,
+  isEmpty,
 }

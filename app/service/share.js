@@ -32,9 +32,9 @@ class ShareService extends Service {
     return headers['set-cookie'][0]
   }
 
-  async getAccessToken(params) {
+  async getAccessToken(token) {
     const {ctx} = this
-    const {tenant, account, cookie} = params
+    const {tenant, account, cookie} = token
     const url = `https://${tenant}/personal/${account}/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1='/personal/${account}/Documents'&RootFolder=/personal/${account}/Documents/&TryNewExperienceSingle=TRUE`
     const res = await ctx.curl(url, {
       method: 'POST',
@@ -59,15 +59,22 @@ class ShareService extends Service {
     })
     const accessToken = res.data.ListSchema['.driveAccessToken'].slice(13) // access_token=
     const api_url = res.data.ListSchema['.driveUrl'] + '/'
+    const api_url_21 = res.data.ListSchema['.driveUrlV21'] + '/'
     const share_folder = res.data.ListData.Row[0].FileRef.split('/').pop()
     this.logger.info('sharepoint accessToken:' + accessToken)
-    return {accessToken, api_url, share_folder}
+    return {accessToken, api_url, api_url_21, share_folder}
   }
 
-  async list(path, params) {
+  async list(path, token, params) {
     const {ctx} = this
-    const {account, tenant, cookie} = params
-    const url = `https://${tenant}/personal/${account}/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1='/personal/${account}/Documents'&RootFolder=/personal/${account}/Documents/${path}&TryNewExperienceSingle=TRUE`
+    const {account, tenant, cookie} = token
+    let url = `https://${tenant}/personal/${account}/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1='/personal/${account}/Documents'&RootFolder=/personal/${account}/Documents/${path}&TryNewExperienceSingle=TRUE`
+    if (!ctx.helper.isEmpty(params)) {
+      for (const [key, value] of Object.entries(params)) {
+        url = ctx.helper.updateQueryStringParameter(url, key, value)
+      }
+    }
+    ctx.logger.info(url)
     const res = await ctx.curl(url, {
       method: 'POST',
       contentType: 'json',
@@ -90,7 +97,7 @@ class ShareService extends Service {
                 <FieldRef Name="SMLastModifiedDate"/>\
                 <FieldRef Name="SMTotalFileStreamSize"/>\
                 <FieldRef Name="SMTotalFileCount"/>\
-                </ViewFields><RowLimit Paged="TRUE">200</RowLimit></View>',
+                </ViewFields><RowLimit Paged="TRUE">20</RowLimit></View>',
           __metadata: {type: 'SP.RenderListDataParameters'},
           RenderOptions: 1513223,
           AllowMultipleValueFilterForTaxonomyFields: true,
@@ -102,9 +109,9 @@ class ShareService extends Service {
     return res.data
   }
 
-  async item(itemUrl, params) {
+  async item(itemUrl, token) {
     const {ctx} = this
-    const {cookie} = params
+    const {cookie} = token
     const res = await ctx.curl(itemUrl, {
       dataType: 'json',
       headers: {

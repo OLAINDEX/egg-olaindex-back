@@ -10,15 +10,17 @@ const {map, filter} = require('lodash')
 class ShareController extends Controller {
   async index() {
     const {ctx, service, app} = this
-    let {path, preview} = ctx.query
-    path = token.share_folder + '/' + ctx.helper.trim(path, '/')
-    const data = await app.cache.get(
-      ctx.helper.hash(`share:list:${path}`),
-      async () => {
-        return await service.share.list(path, token)
-      },
-      300,
-    )
+    let {path, preview, params} = ctx.request.body
+    path = token.share_folder + '/' + ctx.helper.trim(ctx.helper.defaultValue(path, '/'), '/')
+    // const paramsKey = ctx.helper.hash(params)
+    // const data = await app.cache.get(
+    //   ctx.helper.hash(`share:list:${path}:${paramsKey}`),
+    //   async () => {
+    //     return await service.share.list(path, token, params)
+    //   },
+    //   300,
+    // )
+    const data = await service.share.list(path, token, params)
     if (data.error) {
       if (preview) {
         ctx.body = ''
@@ -37,7 +39,6 @@ class ShareController extends Controller {
             time: dayjs(e.SMLastModifiedDate).format('YYYY-MM-DD HH:mm:ss'),
           }
         })
-        ctx.logger.info(rows)
         const list = filter(rows, (row) => {
           return !ctx.helper.in_array(row.name, ['README.md', 'HEAD.md', '.password'], false)
         })
@@ -56,7 +57,15 @@ class ShareController extends Controller {
           time: dayjs(info.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
           childCount: info.folder.childCount,
         }
-        ctx.body = service.response.success({list, item})
+
+        const nextPageParams = ctx.helper.getQueryVariable(data.ListData.NextHref)
+        const meta = {
+          FirstRow: data.ListData.FirstRow,
+          LastRow: data.ListData.LastRow,
+          RowLimit: data.ListData.RowLimit,
+          nextPageParams,
+        }
+        ctx.body = service.response.success({list, item, meta})
       } else {
         const info = await app.cache.get(
           ctx.helper.hash(`share:item:${path}`),
