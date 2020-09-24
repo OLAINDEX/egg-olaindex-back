@@ -74,7 +74,6 @@ class ShareService extends Service {
         url = ctx.helper.updateQueryStringParameter(url, key, value)
       }
     }
-    ctx.logger.info(url)
     const res = await ctx.curl(url, {
       method: 'POST',
       contentType: 'json',

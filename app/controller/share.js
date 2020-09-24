@@ -12,15 +12,16 @@ class ShareController extends Controller {
     const {ctx, service, app} = this
     let {path, preview, params} = ctx.request.body
     path = token.share_folder + '/' + ctx.helper.trim(ctx.helper.defaultValue(path, '/'), '/')
-    // const paramsKey = ctx.helper.hash(params)
-    // const data = await app.cache.get(
-    //   ctx.helper.hash(`share:list:${path}:${paramsKey}`),
-    //   async () => {
-    //     return await service.share.list(path, token, params)
-    //   },
-    //   300,
-    // )
-    const data = await service.share.list(path, token, params)
+    params = ctx.helper.defaultValue(params, {PageFirstRow: 1})
+    ctx.logger.info(params)
+    const data = await app.cache.get(
+      ctx.helper.hash(`share:list:${path}:${params.PageFirstRow}`),
+      async () => {
+        return await service.share.list(path, token, params)
+      },
+      300,
+    )
+    // const data = await service.share.list(path, token, params)
     if (data.error) {
       if (preview) {
         ctx.body = ''
