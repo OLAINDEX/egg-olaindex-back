@@ -103,7 +103,7 @@ module.exports = (appInfo) => {
   const sequelize = {
     dialect: 'sqlite',
     dialectModule: sqlite3,
-    storage: path.join(__dirname, '..', 'storage/database.sqlite'),
+    storage: path.join(__dirname, '..', 'storage/olaindex.db'),
     logging: console.log,
     define: {
       underscored: true,
