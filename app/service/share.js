@@ -92,6 +92,7 @@ class ShareService extends Service {
             '<View ><Query><OrderBy><FieldRef Name="LinkFilename" Ascending="true"></FieldRef></OrderBy></Query><ViewFields>\
                 <FieldRef Name="CurrentFolderSpItemUrl"/>\
                 <FieldRef Name="FileLeafRef"/>\
+                <FieldRef Name="DocIcon"/>\
                 <FieldRef Name="FSObjType"/>\
                 <FieldRef Name="SMLastModifiedDate"/>\
                 <FieldRef Name="SMTotalFileStreamSize"/>\
@@ -111,10 +112,12 @@ class ShareService extends Service {
   async item(itemUrl, token) {
     const {ctx} = this
     const {cookie} = token
-    const res = await ctx.curl(itemUrl, {
+    const url = ctx.helper.updateQueryStringParameter(itemUrl, 'expand', 'thumbnails')
+    const res = await ctx.curl(url, {
       dataType: 'json',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:69.0) Gecko/20100101 Firefox/69.0',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36',
         Cookie: cookie,
       },
       timeout: 5000,

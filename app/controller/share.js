@@ -7,13 +7,20 @@ const Controller = require('egg').Controller
 const token = fs.readJsonSync(path.resolve(__dirname, './../../storage/share_token.json'))
 const marked = require('marked')
 const {map, filter} = require('lodash')
+const extension = {
+  image: ['ico', 'bmp', 'gif', 'jpg', 'jpeg', 'jpe', 'jfif', 'tif', 'tiff', 'png', 'heic', 'webp'],
+  audio: ['mp3', 'wma', 'flac', 'ape', 'wav', 'ogg', 'm4a'],
+  office: ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'],
+  txt: ['txt', 'bat', 'sh', 'php', 'asp', 'js', 'css', 'json', 'html', 'c', 'cpp', 'md', 'py', 'omf'],
+  video: ['mp4', 'webm', 'mkv', 'mov', 'flv', 'blv', 'avi', 'wmv', 'm3u8', 'rm', 'rmvb'],
+  zip: ['zip', 'rar', '7z', 'gz', 'tar'],
+}
 class ShareController extends Controller {
   async index() {
     const {ctx, service, app} = this
     let {path, preview, params} = ctx.request.body
     path = token.share_folder + '/' + ctx.helper.trim(ctx.helper.defaultValue(path, '/'), '/')
     params = ctx.helper.defaultValue(params, {PageFirstRow: 1})
-    ctx.logger.info(params)
     const data = await app.cache.get(
       ctx.helper.hash(`share:list:${path}:${params.PageFirstRow}`),
       async () => {
@@ -21,7 +28,6 @@ class ShareController extends Controller {
       },
       300,
     )
-    // const data = await service.share.list(path, token, params)
     if (data.error) {
       if (preview) {
         ctx.body = ''
@@ -38,6 +44,7 @@ class ShareController extends Controller {
             size: ctx.helper.formatSize(Number(e.SMTotalFileStreamSize)),
             mime: Number(e.FSObjType) ? '' : ctx.helper.getMime(e.LinkFilename),
             time: dayjs(e.SMLastModifiedDate).format('YYYY-MM-DD HH:mm:ss'),
+            ext: e.File_x0020_Type,
           }
         })
         const list = filter(rows, (row) => {
@@ -76,6 +83,12 @@ class ShareController extends Controller {
           300,
         )
         if (!info.file) ctx.body = service.response.success() // 空文件夹
+        const ext = ctx.helper.getExtensionByName(info.name)
+        const thumbnails = {
+          small: info.thumbnails[0].small,
+          medium: info.thumbnails[0].medium,
+          large: info.thumbnails[0].large,
+        }
         if (preview) {
           const content = await app.cache.get(
             ctx.helper.hash(`share:content:${path}`),
@@ -86,7 +99,11 @@ class ShareController extends Controller {
             },
             300,
           )
-          ctx.body = ctx.helper.getMime(info.name) === 'text/markdown' ? marked(content.data) : content.data
+          if (ctx.helper.in_array(ext, extension.txt)) {
+            ctx.body = ctx.helper.getMime(info.name) === 'text/markdown' ? marked(content.data) : content.data
+          } else {
+            ctx.redirect(info['@content.downloadUrl'])
+          }
         } else {
           ctx.body = service.response.success({
             type: 0,
@@ -94,7 +111,9 @@ class ShareController extends Controller {
             size: ctx.helper.formatSize(Number(info.size)),
             mime: info.file.mimeType,
             time: dayjs(info.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
+            ext,
             url: info['@content.downloadUrl'],
+            thumb: thumbnails,
           })
         }
       }

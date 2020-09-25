@@ -89,10 +89,6 @@ const trim = (str, char, type) => {
 const in_array = (needle, haystack, argStrict) => {
   let key = ''
   const strict = !!argStrict
-
-  // we prevent the double check (strict && arr[key] === ndl) || (!strict && arr[key] === ndl)
-  // in just one for, in order to improve the performance
-  // deciding wich type of comparation will do before walk array
   if (strict) {
     for (key in haystack) {
       if (haystack[key] === needle) {
@@ -165,6 +161,11 @@ const updateQueryStringParameter = (uri, key, value) => {
 
 const isEmpty = (obj) => [Object, Array].includes((obj || {}).constructor) && !Object.entries(obj || {}).length
 
+const getExtensionByName = (filename) => {
+  // eslint-disable-next-line no-bitwise
+  return filename.slice(((filename.lastIndexOf('.') - 1) >>> 0) + 2)
+}
+
 module.exports = {
   renderError,
   timeFormat,
@@ -180,4 +181,5 @@ module.exports = {
   getQueryVariable,
   updateQueryStringParameter,
   isEmpty,
+  getExtensionByName,
 }
