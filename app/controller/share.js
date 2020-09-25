@@ -44,7 +44,7 @@ class ShareController extends Controller {
             size: ctx.helper.formatSize(Number(e.SMTotalFileStreamSize)),
             mime: Number(e.FSObjType) ? '' : ctx.helper.getMime(e.LinkFilename),
             time: dayjs(e.SMLastModifiedDate).format('YYYY-MM-DD HH:mm:ss'),
-            ext: e.File_x0020_Type,
+            ext: e['.fileType'],
           }
         })
         const list = filter(rows, (row) => {

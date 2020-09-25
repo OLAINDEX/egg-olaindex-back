@@ -2,8 +2,10 @@
 
 'use strict'
 
+const path = require('path')
 const fsStore = require('cache-manager-fs-hash')
 const redisStore = require('cache-manager-ioredis')
+const sqlite3 = require('sqlite3').verbose()
 
 /**
  * @param {Egg.EggAppInfo} appInfo app info
@@ -98,6 +100,23 @@ module.exports = (appInfo) => {
     allowMethods: 'GET,HEAD,PUT,POST,DELETE,PATCH',
   }
 
+  const sequelize = {
+    dialect: 'sqlite',
+    dialectModule: sqlite3,
+    storage: path.join(__dirname, '..', 'storage/database.sqlite'),
+    logging: console.log,
+    define: {
+      underscored: true,
+      timestamps: false,
+      createdAt: false,
+      updatedAt: false,
+      deletedAt: false,
+      paranoid: false,
+    },
+    // 是否同步
+    sync: {force: false},
+  }
+
   return {
     ...config,
     ...userConfig,
@@ -106,5 +125,6 @@ module.exports = (appInfo) => {
     oauth2,
     oauth2_cn,
     cors,
+    sequelize,
   }
 }

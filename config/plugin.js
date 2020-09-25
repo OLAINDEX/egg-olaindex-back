@@ -22,4 +22,8 @@ module.exports = {
     enable: true,
     package: 'egg-passport',
   },
+  sequelize: {
+    enable: true,
+    package: 'egg-sequelize',
+  },
 }
