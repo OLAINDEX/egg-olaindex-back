@@ -58,6 +58,7 @@ const randomString = (len, charSet) => {
 const urlSpCharEncode = (s) => {
   return !s ? s : s.replace(/%/g, '%25').replace(/#/g, '%23')
 }
+
 const formatSize = (size) => {
   if (typeof size !== 'number') size = NaN
   let count = 0
@@ -166,6 +167,18 @@ const getExtensionByName = (filename) => {
   return filename.slice(((filename.lastIndexOf('.') - 1) >>> 0) + 2)
 }
 
+const response = (data = [], code = 0, msg = 'ok') => {
+  const buildResponse = (data = [], code = 0, msg = 'ok') => {
+    data = {
+      data,
+      msg,
+      code,
+    }
+    return data
+  }
+
+  return buildResponse(data, code, msg)
+}
 module.exports = {
   renderError,
   timeFormat,
@@ -182,4 +195,5 @@ module.exports = {
   updateQueryStringParameter,
   isEmpty,
   getExtensionByName,
+  response,
 }

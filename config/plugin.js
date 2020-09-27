@@ -18,10 +18,6 @@ module.exports = {
     enable: true,
     package: 'egg-view-nunjucks',
   },
-  passport: {
-    enable: true,
-    package: 'egg-passport',
-  },
   sequelize: {
     enable: true,
     package: 'egg-sequelize',

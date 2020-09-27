@@ -11,6 +11,7 @@ module.exports = (app) => {
   router.post('/share', controller.share.index)
   router.get('/test', controller.test.index)
 
+  router.post('/user/login', controller.user.login)
   router.get('/auth/login', controller.auth.login)
   router.get('/auth/callback', controller.auth.callback)
   router.get('/api/me', controller.api.getMe)

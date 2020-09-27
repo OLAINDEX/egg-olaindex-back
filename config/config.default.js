@@ -27,7 +27,12 @@ module.exports = (appInfo) => {
   }
 
   // add your middleware config here
-  config.middleware = []
+  config.middleware = ['jwt']
+
+  config.jwt = {
+    secret: '0eMM1Y0p5L',
+    ignore: ['/user/login'],
+  }
 
   // add your user config here
   const userConfig = {
