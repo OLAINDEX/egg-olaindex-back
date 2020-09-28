@@ -8,7 +8,7 @@ class ResponseService extends Service {
       data,
       msg,
       code,
-      error: code ? msg : '',
+      status: code === 0,
     }
     return data
   }

@@ -84,11 +84,6 @@ class ShareController extends Controller {
         )
         if (!info.file) ctx.body = service.response.success() // 空文件夹
         const ext = ctx.helper.getExtensionByName(info.name)
-        const thumbnails = {
-          small: info.thumbnails[0].small,
-          medium: info.thumbnails[0].medium,
-          large: info.thumbnails[0].large,
-        }
         if (preview) {
           const content = await app.cache.get(
             ctx.helper.hash(`share:content:${path}`),
@@ -105,6 +100,16 @@ class ShareController extends Controller {
             ctx.redirect(info['@content.downloadUrl'])
           }
         } else {
+          let thumb = {}
+          ctx.logger.info(info)
+          if (!ctx.helper.isEmpty(info.thumbnails)) {
+            thumb = {
+              small: info.thumbnails[0].small,
+              medium: info.thumbnails[0].medium,
+              large: info.thumbnails[0].large,
+            }
+          }
+
           ctx.body = service.response.success({
             type: 0,
             name: info.name,
@@ -113,7 +118,7 @@ class ShareController extends Controller {
             time: dayjs(info.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
             ext,
             url: info['@content.downloadUrl'],
-            thumb: thumbnails,
+            thumb,
           })
         }
       }

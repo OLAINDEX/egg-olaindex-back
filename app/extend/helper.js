@@ -173,6 +173,7 @@ const response = (data = [], code = 0, msg = 'ok') => {
       data,
       msg,
       code,
+      status: code === 0,
     }
     return data
   }

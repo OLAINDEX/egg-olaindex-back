@@ -20,7 +20,7 @@ class UserController extends Controller {
           {expiresIn: '7 days'},
         )
         ctx.body = service.response.success({
-          accessToken,
+          token: accessToken,
           username,
           user_id,
           is_admin: user.isAdmin,
