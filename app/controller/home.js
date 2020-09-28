@@ -20,11 +20,6 @@ class HomeController extends Controller {
       ctx.body = ctx.helper.renderError(error.code)
     }
   }
-
-  async page() {
-    const ctx = this.ctx
-    await ctx.render('test.nj', {name: 'egg'})
-  }
 }
 
 module.exports = HomeController

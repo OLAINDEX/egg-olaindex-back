@@ -1,6 +1,3 @@
 'use strict'
 
-module.exports = {
-  isAuthenticated() {},
-  user() {},
-}
+module.exports = {}

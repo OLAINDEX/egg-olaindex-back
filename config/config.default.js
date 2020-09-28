@@ -27,7 +27,7 @@ module.exports = (appInfo) => {
   }
 
   // add your middleware config here
-  config.middleware = ['jwt']
+  config.middleware = []
 
   config.jwt = {
     secret: '0eMM1Y0p5L',

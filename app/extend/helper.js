@@ -180,6 +180,7 @@ const response = (data = [], code = 0, msg = 'ok') => {
 
   return buildResponse(data, code, msg)
 }
+
 module.exports = {
   renderError,
   timeFormat,
