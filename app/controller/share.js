@@ -109,8 +109,7 @@ class ShareController extends Controller {
               large: info.thumbnails[0].large,
             }
           }
-
-          ctx.body = service.response.success({
+          const item = {
             type: 0,
             name: info.name,
             size: ctx.helper.formatSize(Number(info.size)),
@@ -119,7 +118,8 @@ class ShareController extends Controller {
             ext,
             url: info['@content.downloadUrl'],
             thumb,
-          })
+          }
+          ctx.body = service.response.success({list: [], meta: [], item})
         }
       }
     }
