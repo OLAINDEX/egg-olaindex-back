@@ -8,10 +8,12 @@ module.exports = (app) => {
   router.get('/', controller.home.index)
 
   router.post('/share', controller.share.index)
-  router.get('/test', controller.test.index)
   router.get('/init', controller.init.index)
 
   router.post('/user/login', controller.user.login)
+
+  router.get('/setting', controller.setting.index)
+  router.post('/setting', controller.setting.update)
 
   router.get('/auth/login', controller.auth.login)
   router.get('/auth/callback', controller.auth.callback)
