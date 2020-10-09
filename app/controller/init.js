@@ -7,7 +7,7 @@ const share = fs.readJsonSync(path.resolve(__dirname, './../../storage/share_con
 class InitController extends Controller {
   async index() {
     const shareUrl = share.shareUrl
-    const {service} = this
+    const {service, ctx} = this
     const params = await service.share.parseShareUrlParams(shareUrl)
     const token = await service.share.getAccessToken(params)
     fs.writeJsonSync(path.resolve(__dirname, './../../storage/share_token.json'), {...params, ...token})
@@ -20,6 +20,7 @@ class InitController extends Controller {
     //   is_admin: 1,
     // })
     // user.save()
+    ctx.body = {...params, ...token}
   }
 }
 
