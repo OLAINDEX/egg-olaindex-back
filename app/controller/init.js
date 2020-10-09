@@ -20,7 +20,8 @@ class InitController extends Controller {
     //   is_admin: 1,
     // })
     // user.save()
-    ctx.body = {...params, ...token}
+    const res = await service.setting.batchUpdate()
+    ctx.body = res
   }
 }
 

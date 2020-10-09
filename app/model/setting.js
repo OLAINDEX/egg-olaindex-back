@@ -1,7 +1,6 @@
 'use strict'
 
 const {checkIsJSON} = require('../extend/helper')
-// const {map, filter} = require('lodash')
 /**
  *
  * @param {Egg.Application} app Application
@@ -44,14 +43,7 @@ module.exports = (app) => {
       timestamps: false,
     },
   )
-  Setting.BatchUpdate = async () => {
-    // const rows = map(data, (e) => {
-    //   return {
-    //     name: '',
-    //     value: '',
-    //   }
-    // })
-  }
+
   Setting.sync()
   return Setting
 }
