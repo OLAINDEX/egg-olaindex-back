@@ -21,8 +21,12 @@ class InitController extends Controller {
     // })
     // user.save()
     // const res = await this.service.setting.batchUpdate({
-    //   app: 'ola',
+    //   name: 'ola',
     //   expires: 600,
+    //   ext:{
+    //     name: 'ola',
+    //     expires: 600,
+    //   }
     // })
     const res = await service.setting.fetchAll()
     ctx.body = ctx.helper.response(res)

@@ -21,6 +21,7 @@ class ShareUpdate extends Subscription {
     const token = await service.share.getAccessToken(params)
     fs.writeJsonSync(path.resolve(__dirname, './../../storage/share_token.json'), {...params, ...token})
     ctx.logger.info({...params, ...token})
+    service.setting.batchUpdate({share_token: {...params, ...token}})
   }
 }
 
