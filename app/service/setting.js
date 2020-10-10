@@ -1,9 +1,19 @@
 'use strict'
 
 const Service = require('egg').Service
-const {map, forEach} = require('lodash')
+const {forEach, map, filter} = require('lodash')
+const {isEmpty, in_array} = require('../extend/helper')
 
 class SettingService extends Service {
+  async fetchAll() {
+    const {app} = this
+    const config = await app.model.Setting.findAll({attributes: ['name', 'value']})
+    const data = {}
+    forEach(config, (el) => {
+      data[el.name] = el.value
+    })
+    return data
+  }
   async batchUpdate(data = []) {
     const {app} = this
     const rows = []
@@ -16,18 +26,30 @@ class SettingService extends Service {
     const all = await app.model.Setting.findAll({
       attributes: ['name'],
     })
-    const res = map(all, (el) => {
-      return el.toJSON()
+    const saved = map(all, (el) => {
+      return el.toJSON().name
     })
-    this.logger.info(res)
-    return res
-    // const newItems = filter(rows, (el) => {
-    //   return !in_array(el.name, all, false)
-    // })
-    // const updateItems = filter(rows, (el) => {
-    //   return in_array(el.name, all, false)
-    // })
-    // return data
+    const newItems = filter(rows, (el) => {
+      return !in_array(el.name, saved, false)
+    })
+    const updateItems = filter(rows, (el) => {
+      return in_array(el.name, saved, false)
+    })
+    if (!isEmpty(newItems)) {
+      await app.model.Setting.bulkCreate(newItems)
+    }
+    forEach(updateItems, (config) => {
+      app.model.Setting.findOne({
+        where: {name: config.name},
+      }).then((item) => {
+        if (config.value !== item.value) {
+          item.update({
+            value: config.value,
+          })
+        }
+      })
+    })
+    return data
   }
 }
 
