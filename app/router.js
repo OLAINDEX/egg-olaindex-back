@@ -8,7 +8,7 @@ module.exports = (app) => {
   router.get('/', controller.home.index)
 
   router.post('/share', controller.share.index)
-  router.get('/init', controller.init.index)
+  router.post('/init', controller.init.index)
 
   router.post('/user/login', controller.user.login)
 
