@@ -33,97 +33,104 @@ class ShareController extends Controller {
     if (data.error) {
       if (preview) {
         ctx.body = ''
-      } else {
+        return
+      }
+      ctx.body = service.response.success()
+      return
+    }
+    if (data.ListData.Row.length > 0) {
+      // 文件夹
+      const rows = map(data.ListData.Row, (e) => {
+        return {
+          type: Number(e.FSObjType),
+          name: e.LinkFilename,
+          size: ctx.helper.formatSize(Number(e.SMTotalFileStreamSize)),
+          mime: Number(e.FSObjType) ? '' : ctx.helper.getMime(e.LinkFilename),
+          time: dayjs(e.SMLastModifiedDate).format('YYYY-MM-DD HH:mm:ss'),
+          ext: e['.fileType'],
+        }
+      })
+      const list = filter(rows, (row) => {
+        return !ctx.helper.in_array(row.name, ['README.md', 'HEAD.md', '.password'], false)
+      })
+      const info = await app.cache.get(
+        ctx.helper.hash(`share:item:${path}`),
+        async () => {
+          return await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
+        },
+        300,
+      )
+      if (info.file) {
         ctx.body = service.response.success()
+        return
       }
-    } else {
-      if (data.ListData.Row.length > 0) {
-        // 文件夹
-        const rows = map(data.ListData.Row, (e) => {
-          return {
-            type: Number(e.FSObjType),
-            name: e.LinkFilename,
-            size: ctx.helper.formatSize(Number(e.SMTotalFileStreamSize)),
-            mime: Number(e.FSObjType) ? '' : ctx.helper.getMime(e.LinkFilename),
-            time: dayjs(e.SMLastModifiedDate).format('YYYY-MM-DD HH:mm:ss'),
-            ext: e['.fileType'],
-          }
-        })
-        const list = filter(rows, (row) => {
-          return !ctx.helper.in_array(row.name, ['README.md', 'HEAD.md', '.password'], false)
-        })
-        const info = await app.cache.get(
-          ctx.helper.hash(`share:item:${path}`),
-          async () => {
-            return await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
-          },
-          300,
-        )
-        if (info.file) ctx.body = service.response.success()
-        const item = {
-          type: 1,
-          name: info.name,
-          size: ctx.helper.formatSize(Number(info.size)),
-          time: dayjs(info.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
-          childCount: info.folder.childCount,
-        }
+      const item = {
+        type: 1,
+        name: info.name,
+        size: ctx.helper.formatSize(Number(info.size)),
+        time: dayjs(info.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
+        childCount: info.folder.childCount,
+      }
 
-        const nextPageParams = ctx.helper.getQueryVariable(data.ListData.NextHref)
-        const meta = {
-          FirstRow: data.ListData.FirstRow,
-          LastRow: data.ListData.LastRow,
-          RowLimit: data.ListData.RowLimit,
-          nextPageParams,
-        }
-        ctx.body = service.response.success({list, item, meta})
-      } else {
-        const info = await app.cache.get(
-          ctx.helper.hash(`share:item:${path}`),
-          async () => {
-            return await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
-          },
-          300,
-        )
-        if (!info.file) ctx.body = service.response.success() // 空文件夹
-        const ext = ctx.helper.getExtensionByName(info.name)
-        if (preview) {
-          const content = await app.cache.get(
-            ctx.helper.hash(`share:content:${path}`),
-            async () => {
-              return await ctx.curl(info['@content.downloadUrl'], {
-                dataType: 'text',
-              })
-            },
-            300,
-          )
-          if (ctx.helper.in_array(ext, extension.txt)) {
-            ctx.body = ctx.helper.getMime(info.name) === 'text/markdown' ? marked(content.data) : content.data
-          } else {
-            ctx.redirect(info['@content.downloadUrl'])
-          }
-        } else {
-          let thumb = {}
-          ctx.logger.info(info)
-          if (!ctx.helper.isEmpty(info.thumbnails)) {
-            thumb = {
-              small: info.thumbnails[0].small,
-              medium: info.thumbnails[0].medium,
-              large: info.thumbnails[0].large,
-            }
-          }
-          const item = {
-            type: 0,
-            name: info.name,
-            size: ctx.helper.formatSize(Number(info.size)),
-            mime: info.file.mimeType,
-            time: dayjs(info.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
-            ext,
-            url: info['@content.downloadUrl'],
-            thumb,
-          }
-          ctx.body = service.response.success({list: [], meta: [], item})
+      const nextPageParams = ctx.helper.getQueryVariable(data.ListData.NextHref)
+      const meta = {
+        FirstRow: data.ListData.FirstRow,
+        LastRow: data.ListData.LastRow,
+        RowLimit: data.ListData.RowLimit,
+        nextPageParams,
+      }
+      ctx.body = service.response.success({list, item, meta})
+      return
+    }
+    const info = await app.cache.get(
+      ctx.helper.hash(`share:item:${path}`),
+      async () => {
+        return await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
+      },
+      300,
+    )
+    if (!info.file) {
+      ctx.body = service.response.success() // 空文件夹
+      return
+    }
+    const ext = ctx.helper.getExtensionByName(info.name)
+    if (preview) {
+      const content = await app.cache.get(
+        ctx.helper.hash(`share:content:${path}`),
+        async () => {
+          return await ctx.curl(info['@content.downloadUrl'], {
+            dataType: 'text',
+          })
+        },
+        300,
+      )
+      if (ctx.helper.in_array(ext, extension.txt)) {
+        ctx.body = ctx.helper.getMime(info.name) === 'text/markdown' ? marked(content.data) : content.data
+        return
+      }
+      ctx.redirect(info['@content.downloadUrl'])
+    } else {
+      let thumb = {}
+      ctx.logger.info(info)
+      if (!ctx.helper.isEmpty(info.thumbnails)) {
+        thumb = {
+          small: info.thumbnails[0].small,
+          medium: info.thumbnails[0].medium,
+          large: info.thumbnails[0].large,
         }
       }
+      const item = {
+        type: 0,
+        name: info.name,
+        size: ctx.helper.formatSize(Number(info.size)),
+        mime: info.file.mimeType,
+        time: dayjs(info.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
+        ext,
+        url: info['@content.downloadUrl'],
+        thumb,
+      }
+      ctx.body = service.response.success({list: [], meta: [], item})
+      return
     }
   }
 

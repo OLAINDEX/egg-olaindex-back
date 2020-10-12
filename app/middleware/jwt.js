@@ -33,9 +33,6 @@ module.exports = (options, app) => {
         if (/^Bearer$/i.test(scheme)) {
           const res = verifyToken(credentials)
           if (res.data && res.data.user_id) {
-            // const user = await app.model.User.findByPk(res.data.user_id)
-            // ctx.session.user = user.toJSON()
-            // ctx.session.isAuthenticated = true
             await next()
           } else {
             ctx.body = ctx.helper.response([], 401, 'invalid token')

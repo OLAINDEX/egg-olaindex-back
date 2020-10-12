@@ -9,6 +9,7 @@ module.exports = (app) => {
 
   router.post('/share', controller.share.index)
   router.post('/init', controller.init.index)
+  router.get('/init/check', controller.init.check)
 
   router.post('/user/login', controller.user.login)
 

@@ -109,14 +109,10 @@ const in_array = (needle, haystack, argStrict) => {
 }
 
 const hash = (key, prefix = 'eggjs') => {
-  return (
-    prefix +
-    '_' +
-    crypto
-      .createHash('md5')
-      .update(key + '')
-      .digest('hex')
-  )
+  return crypto
+    .createHash('md5')
+    .update(prefix + '_' + key + '')
+    .digest('hex')
 }
 
 const defaultValue = (value, defaultValue) => {

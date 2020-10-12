@@ -17,7 +17,10 @@ module.exports = (app) => {
       },
       username: {
         type: DataTypes.STRING(32),
-        unique: true,
+        unique: {
+          args: true,
+          msg: '用户已经存在.',
+        },
       },
       password: {
         type: DataTypes.STRING,
