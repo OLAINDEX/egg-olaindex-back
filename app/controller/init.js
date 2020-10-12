@@ -4,10 +4,11 @@ const path = require('path')
 const fs = require('fs-extra')
 const Controller = require('egg').Controller
 const lockFile = path.resolve(__dirname, './../../storage/install.lock')
-const isInstall = fs.existsSync(lockFile)
+
 class InitController extends Controller {
   async index() {
     const {app, service, ctx} = this
+    const isInstall = fs.existsSync(lockFile)
     if (!isInstall) {
       ctx.body = service.response.fail('已初始化应用')
       return
@@ -30,7 +31,13 @@ class InitController extends Controller {
   }
   check() {
     const {service, ctx} = this
-    ctx.body = service.response.success({install: isInstall})
+    ctx.logger.info(lockFile)
+    ctx.body = service.response.success({install: fs.existsSync(lockFile)})
+  }
+  async load() {
+    const {ctx, service} = this
+    const data = await service.setting.fetchAll()
+    ctx.body = service.response.success(data)
   }
 }
 
