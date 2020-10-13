@@ -1,5 +1,5 @@
 'use strict'
-
+const dayjs = require('dayjs')
 /**
  *
  * @param {Egg.Application} app Application
@@ -50,14 +50,33 @@ module.exports = (app) => {
         allowNull: false,
         defaultValue: '',
       },
-      expiresIn: {
-        type: DataTypes.BIGINT,
+      expires_on: {
+        type: DataTypes.INTEGER(10),
         allowNull: false,
         defaultValue: 0,
+      },
+      created_at: {
+        type: DataTypes.INTEGER(10),
+        allowNull: true,
+      },
+      updated_at: {
+        type: DataTypes.INTEGER(10),
+        allowNull: true,
       },
     },
     {
       timestamps: false,
+      hooks: {
+        beforeValidate: (obj) => {
+          const now = dayjs().unix()
+          if (obj.isNewRecord) {
+            obj.created_at = now
+            obj.updated_at = now
+          } else {
+            obj.updated_at = dayjs().unix()
+          }
+        },
+      },
     },
   )
 

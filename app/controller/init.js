@@ -9,7 +9,7 @@ class InitController extends Controller {
   async index() {
     const {app, service, ctx} = this
     const isInstall = fs.existsSync(lockFile)
-    if (!isInstall) {
+    if (isInstall) {
       ctx.body = service.response.fail('已初始化应用')
       return
     }
