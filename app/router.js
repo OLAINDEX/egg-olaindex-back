@@ -17,6 +17,8 @@ module.exports = (app) => {
   router.get('/setting', controller.setting.index)
   router.post('/setting', controller.setting.update)
 
+  router.post('/account/create', controller.account.create)
+
   router.get('/auth/login', controller.auth.login)
   router.get('/auth/callback', controller.auth.callback)
 

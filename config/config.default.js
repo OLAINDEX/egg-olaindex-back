@@ -40,6 +40,16 @@ module.exports = (appInfo) => {
     scope: 'offline_access user.read files.readwrite.all',
     rest_endpoint: 'https://graph.microsoft.com/',
     rest_endpoint_cn: 'https://microsoftgraph.chinacloudapi.cn/',
+    com_api: {
+      tokenHost: 'https://login.microsoftonline.com/common/',
+      authorizePath: 'oauth2/v2.0/authorize',
+      tokenPath: 'oauth2/v2.0/token',
+    },
+    cn_api: {
+      tokenHost: 'https://login.partner.microsoftonline.cn/common/',
+      authorizePath: 'oauth2/authorize',
+      tokenPath: 'oauth2/token',
+    },
   }
 
   const cache = {

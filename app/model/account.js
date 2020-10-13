@@ -55,6 +55,16 @@ module.exports = (app) => {
         allowNull: false,
         defaultValue: 0,
       },
+      share_uri: {
+        type: DataTypes.STRING(255),
+        allowNull: false,
+        defaultValue: '',
+      },
+      raw: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        defaultValue: '',
+      },
       created_at: {
         type: DataTypes.INTEGER(10),
         allowNull: true,
