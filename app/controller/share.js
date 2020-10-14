@@ -16,6 +16,11 @@ const extension = {
   zip: ['zip', 'rar', '7z', 'gz', 'tar'],
 }
 class ShareController extends Controller {
+  async list() {
+    const {ctx, service} = this
+    const accounts = await service.account.list()
+    ctx.body = service.response.success(accounts)
+  }
   async index() {
     const {ctx, service, app} = this
     let {path, preview, params} = ctx.request.body
@@ -28,8 +33,6 @@ class ShareController extends Controller {
       },
       300,
     )
-    // const data = await service.share.list(path, token, params)
-    // ctx.logger.info(data)
     if (data.error) {
       if (preview) {
         ctx.body = ''
@@ -105,7 +108,8 @@ class ShareController extends Controller {
         300,
       )
       if (ctx.helper.in_array(ext, extension.txt)) {
-        ctx.body = ctx.helper.getMime(info.name) === 'text/markdown' ? marked(content.data) : content.data
+        const rawContent = ctx.helper.getMime(info.name) === 'text/markdown' ? marked(content.data) : content.data
+        ctx.body = service.response.success({content: rawContent})
         return
       }
       ctx.redirect(info['@content.downloadUrl'])

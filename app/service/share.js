@@ -28,7 +28,6 @@ class ShareService extends Service {
     if (!headers['set-cookie']) {
       throw new Error('This sharing link has been canceled')
     }
-    this.logger.info('sharepoint cookie:' + headers['set-cookie'][0])
     return headers['set-cookie'][0]
   }
 
@@ -61,7 +60,6 @@ class ShareService extends Service {
     const api_url = res.data.ListSchema['.driveUrl'] + '/'
     const api_url_21 = res.data.ListSchema['.driveUrlV21'] + '/'
     const share_folder = res.data.ListData.Row[0].FileRef.split('/').pop()
-    this.logger.info('sharepoint accessToken:' + accessToken)
     return {accessToken, api_url, api_url_21, share_folder}
   }
 

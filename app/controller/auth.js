@@ -1,62 +1,62 @@
 'use strict'
 
-const path = require('path')
-const fs = require('fs-extra')
 const Controller = require('egg').Controller
 const {AuthorizationCode} = require('simple-oauth2')
 
 class AuthController extends Controller {
-  async login() {
-    const {app, ctx} = this
-    const {type} = ctx.query
-    const state = ctx.helper.randomString(20)
-    ctx.session.state = state
-    await app.cache.set(state, type, 300)
-    let config = app.config.oauth2
-    if (type === 'cn') {
-      config = app.config.oauth2_cn
-    }
-    const client = new AuthorizationCode(config)
-    const authorizationUri = client.authorizeURL({
-      redirect_uri: app.config.userConfig.redirect_uri,
-      scope: app.config.userConfig.scope.split(' '),
-      state,
-    })
-    ctx.redirect(authorizationUri)
-  }
   async callback() {
-    const {app, ctx} = this
-    const session_state = ctx.session.state || ''
+    const {app, service, ctx} = this
     const {code, state} = ctx.query
-    if (session_state !== state) {
+    if (!state) {
       ctx.body = ctx.helper.renderError('Invaild state')
+      return
     }
-    let config = app.config.oauth2
+    const cache = await app.cache.get(state)
     const tokenConfig = {
       code,
-      redirect_uri: app.config.userConfig.redirect_uri,
-      scope: app.config.userConfig.scope.split(' '),
+      redirect_uri: cache.redirect_uri,
+      scope: app.config.scope.split(' '),
     }
-    const type = await app.cache.get(state)
-    if (type === 'cn') {
-      config = app.config.oauth2_cn
-      tokenConfig.resource = app.config.userConfig.rest_endpoint_cn
+    let auth = app.config.com_api
+    const TYPE_CN = 1
+    if (cache.type === TYPE_CN) {
+      auth = app.config.cn_api
+      tokenConfig.resource = app.config.rest_endpoint_cn
     }
     try {
-      const client = new AuthorizationCode(config)
+      const client = new AuthorizationCode({
+        client: {
+          id: cache.client_id,
+          secret: cache.client_secret,
+        },
+        auth: {
+          tokenHost: auth.tokenHost,
+          authorizePath: auth.authorizePath,
+          tokenPath: auth.tokenPath,
+        },
+      })
       const accessToken = await client.getToken(tokenConfig)
       let token = accessToken.token
-      if (type === 'cn') {
-        token = Object.assign({}, token, {type: 'cn'})
+      if (cache.type === TYPE_CN) {
+        token = Object.assign({}, token, {type: TYPE_CN})
       }
-      fs.writeJsonSync(path.resolve(__dirname, './../../storage/access_token.json'), token)
-      ctx.logger.info(token)
-      ctx.logger.info('Access Token Success')
+      await service.account.create({
+        remark: cache.remark,
+        type: cache.type,
+        client_id: cache.client_id,
+        client_secret: cache.client_secret,
+        redirect_uri: cache.redirect_uri,
+        access_token: token.access_token,
+        refresh_token: token.refresh_token,
+        expires_on: token.expires_on,
+        raw: token,
+      })
     } catch (error) {
       ctx.logger.error('Access Token Error', error.message)
-      ctx.body = ctx.helper.renderError('Access Token Error')
+      ctx.body = ctx.helper.renderError(error.message)
+      return
     }
-    ctx.redirect('/')
+    ctx.redirect(cache.origin_uri)
   }
 }
 

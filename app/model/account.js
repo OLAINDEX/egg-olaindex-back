@@ -1,5 +1,6 @@
 'use strict'
 const dayjs = require('dayjs')
+const {checkIsJSON} = require('../extend/helper')
 /**
  *
  * @param {Egg.Application} app Application
@@ -64,6 +65,20 @@ module.exports = (app) => {
         type: DataTypes.TEXT,
         allowNull: false,
         defaultValue: '',
+        set(val) {
+          if (typeof val !== 'string') {
+            this.setDataValue('raw', JSON.stringify(val))
+          } else {
+            this.setDataValue('raw', val)
+          }
+        },
+        get() {
+          const value = this.getDataValue('raw')
+          if (checkIsJSON(value)) {
+            return JSON.parse(value)
+          }
+          return value
+        },
       },
       created_at: {
         type: DataTypes.INTEGER(10),
