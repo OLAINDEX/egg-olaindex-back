@@ -5,6 +5,11 @@ const {omit} = require('lodash')
 const {AuthorizationCode} = require('simple-oauth2')
 
 class AccountService extends Service {
+  async findOne(options) {
+    const {app} = this
+    const account = await app.model.Account.findOne(options)
+    return account
+  }
   async list() {
     const {app} = this
     const accounts = await app.model.Account.findAll()
@@ -19,6 +24,13 @@ class AccountService extends Service {
     const {app} = this
     const account = await app.model.Account.update(data)
     return account
+  }
+
+  async delete(id) {
+    const {app} = this
+    const account = await app.model.Account.findByPk(id)
+    account.destroy()
+    return true
   }
   async getAccessToken(account) {
     const {app} = this

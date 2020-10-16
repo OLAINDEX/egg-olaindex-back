@@ -16,11 +16,6 @@ const extension = {
   zip: ['zip', 'rar', '7z', 'gz', 'tar'],
 }
 class ShareController extends Controller {
-  async list() {
-    const {ctx, service} = this
-    const accounts = await service.account.list()
-    ctx.body = service.response.success(accounts)
-  }
   async index() {
     const {ctx, service, app} = this
     let {path, preview, params} = ctx.request.body
@@ -35,7 +30,7 @@ class ShareController extends Controller {
     )
     if (data.error) {
       if (preview) {
-        ctx.body = ''
+        ctx.body = service.response.success({content: ''})
         return
       }
       ctx.body = service.response.success()
@@ -115,7 +110,6 @@ class ShareController extends Controller {
       ctx.redirect(info['@content.downloadUrl'])
     } else {
       let thumb = {}
-      ctx.logger.info(info)
       if (!ctx.helper.isEmpty(info.thumbnails)) {
         thumb = {
           small: info.thumbnails[0].small,
@@ -155,7 +149,6 @@ class ShareController extends Controller {
       const data = await client.api(url).get()
       ctx.body = service.response.success(data)
     } catch (error) {
-      ctx.logger.error(error)
       ctx.body = ctx.helper.renderError(error.code)
     }
   }

@@ -92,14 +92,15 @@ module.exports = (app) => {
     {
       timestamps: false,
       hooks: {
-        beforeValidate: (obj) => {
+        beforeCreate: (obj) => {
           const now = dayjs().unix()
-          if (obj.isNewRecord) {
-            obj.created_at = now
-            obj.updated_at = now
-          } else {
-            obj.updated_at = dayjs().unix()
-          }
+          obj.created_at = now
+          obj.updated_at = now
+        },
+
+        beforeUpdate: (obj) => {
+          const now = dayjs().unix()
+          obj.updated_at = now
         },
       },
     },

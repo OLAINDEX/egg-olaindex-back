@@ -2,12 +2,20 @@
 
 const Controller = require('egg').Controller
 const {AuthorizationCode} = require('simple-oauth2')
+const {map} = require('lodash')
 
 class AccountController extends Controller {
   async list() {
     const {ctx, service} = this
     const accounts = await service.account.list()
-    ctx.body = service.response.success(accounts)
+    const settings = await service.setting.fetchAll()
+    const rows = map(accounts, (item) => {
+      return {
+        isMain: item.id === parseInt(settings.main),
+        ...item.toJSON(),
+      }
+    })
+    ctx.body = service.response.success(rows)
   }
   async init() {
     const {app, ctx, service} = this
@@ -63,6 +71,35 @@ class AccountController extends Controller {
     })
 
     ctx.body = service.response.success({type: params.type, redirect_uri: authorizationUri})
+  }
+
+  async update() {
+    const {ctx, service} = this
+    const params = ctx.request.body
+    const id = params.id
+    const account = await service.account.findOne({
+      where: {id},
+    })
+    account.update(params)
+    ctx.body = service.response.success(account.toJSON())
+  }
+
+  async delete() {
+    const {ctx, service} = this
+    const params = ctx.request.body
+    const id = params.id
+    await service.account.delete(id)
+    ctx.body = service.response.success()
+  }
+
+  async mark() {
+    const {ctx, service} = this
+    const params = ctx.request.body
+    const id = params.id
+    await service.setting.batchUpdate({
+      main: id,
+    })
+    ctx.body = service.response.success({main: id})
   }
 }
 
