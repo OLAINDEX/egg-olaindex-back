@@ -5,7 +5,7 @@ const {AuthorizationCode} = require('simple-oauth2')
 
 class AuthController extends Controller {
   async callback() {
-    const {app, service, ctx} = this
+    const {app, ctx} = this
     const {code, state} = ctx.query
     if (!state) {
       ctx.body = ctx.helper.renderError('Invaild state')
@@ -40,7 +40,7 @@ class AuthController extends Controller {
       if (cache.type === TYPE_CN) {
         token = Object.assign({}, token, {type: TYPE_CN})
       }
-      await service.account.create({
+      await app.model.Account.create({
         remark: cache.remark,
         type: cache.type,
         client_id: cache.client_id,

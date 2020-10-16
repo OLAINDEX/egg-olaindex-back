@@ -10,21 +10,6 @@ class AccountService extends Service {
     const account = await app.model.Account.findOne(options)
     return account
   }
-  async list() {
-    const {app} = this
-    const accounts = await app.model.Account.findAll()
-    return accounts
-  }
-  async create(data) {
-    const {app} = this
-    const account = await app.model.Account.create(data)
-    return account
-  }
-  async update(data) {
-    const {app} = this
-    const account = await app.model.Account.update(data)
-    return account
-  }
 
   async delete(id) {
     const {app} = this

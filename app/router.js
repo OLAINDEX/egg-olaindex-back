@@ -24,4 +24,5 @@ module.exports = (app) => {
   router.get('/setting', controller.setting.index)
   router.post('/setting', controller.setting.update)
   router.get('/cache/clear', controller.cache.clear)
+  router.get('/t', controller.test.index)
 }

@@ -73,6 +73,31 @@ class GraphService extends Service {
     return items
   }
 
+  async getItemsByPath(accessTokenObject, params) {
+    let endpoint = ''
+    params = pickBy(params, identity)
+    const defaultParams = {
+      path: '',
+      top: 20,
+      skip: '',
+      expand: '',
+    }
+    const {accessToken, baseUrl, defaultVersion} = accessTokenObject
+    let {path, top, skip, expand} = Object.assign({}, defaultParams, params || {})
+    path = this.convertPath(path)
+    if (path === '/' || path === '') {
+      endpoint = '/me/drive/root/children'
+    } else {
+      path = this.ctx.helper.trim(path, '/')
+      endpoint = `/me/drive/root:/${path}:/children`
+    }
+    this.ctx.logger.info(path)
+    this.ctx.logger.info(endpoint)
+    const client = this.initAuthenticatedClient(accessToken, baseUrl, defaultVersion)
+    const items = await client.api(endpoint).top(top).skipToken(skip).expand(expand).get()
+    return items
+  }
+
   async getItem(accessTokenObject, params) {
     let endpoint = ''
     params = pickBy(params, identity)
@@ -84,6 +109,26 @@ class GraphService extends Service {
     const {itemId, expand} = Object.assign({}, defaultParams, params || {})
     if (itemId) {
       endpoint = `/me/drive/items/${itemId}`
+    } else {
+      endpoint = '/me/drive/root'
+    }
+    const client = this.initAuthenticatedClient(accessToken, baseUrl, defaultVersion)
+    const item = await client.api(endpoint).expand(expand).get()
+    return item
+  }
+
+  async getItemByPath(accessTokenObject, params) {
+    let endpoint = ''
+    params = pickBy(params, identity)
+    const defaultParams = {
+      path: '',
+      expand: '',
+    }
+    const {accessToken, baseUrl, defaultVersion} = accessTokenObject
+    let {path, expand} = Object.assign({}, defaultParams, params || {})
+    if (path) {
+      path = this.convertPath(path)
+      endpoint = `/me/drive/root:/${path}`
     } else {
       endpoint = '/me/drive/root'
     }

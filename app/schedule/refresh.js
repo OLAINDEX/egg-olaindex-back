@@ -13,9 +13,9 @@ class ShareUpdate extends Subscription {
 
   // subscribe 是真正定时任务执行时被运行的函数
   async subscribe() {
-    const {ctx, service} = this
+    const {app, ctx, service} = this
     const TYPE_SHARE = 0
-    const accounts = await service.account.list()
+    const accounts = await app.model.Account.findAll()
     forEach(accounts, async (account) => {
       const type = account.type
       if (type === TYPE_SHARE) {

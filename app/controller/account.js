@@ -6,8 +6,8 @@ const {map} = require('lodash')
 
 class AccountController extends Controller {
   async list() {
-    const {ctx, service} = this
-    const accounts = await service.account.list()
+    const {app, ctx, service} = this
+    const accounts = await app.model.Account.findAll()
     const settings = await service.setting.fetchAll()
     const rows = map(accounts, (item) => {
       return {
@@ -37,7 +37,7 @@ class AccountController extends Controller {
       const data = await service.share.parseShareUrlParams(params.share_uri)
       const token = await service.share.getAccessToken(data)
       const raw = {...data, ...token}
-      const account = await service.account.create({
+      const account = await app.model.Account.create({
         type: params.type,
         remark: params.remark,
         access_token: token.accessToken,
@@ -74,10 +74,10 @@ class AccountController extends Controller {
   }
 
   async update() {
-    const {ctx, service} = this
+    const {app, ctx, service} = this
     const params = ctx.request.body
     const id = params.id
-    const account = await service.account.findOne({
+    const account = await app.model.Account.findOne({
       where: {id},
     })
     account.update(params)
@@ -85,10 +85,11 @@ class AccountController extends Controller {
   }
 
   async delete() {
-    const {ctx, service} = this
+    const {app, ctx, service} = this
     const params = ctx.request.body
     const id = params.id
-    await service.account.delete(id)
+    const account = await app.model.Account.findByPk(id)
+    await account.destroy()
     ctx.body = service.response.success()
   }
 

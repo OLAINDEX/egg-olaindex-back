@@ -5,8 +5,8 @@ const {map} = require('lodash')
 
 class BlockController extends Controller {
   async list() {
-    const {ctx, service} = this
-    const accounts = await service.account.list()
+    const {app, ctx, service} = this
+    const accounts = await app.model.Account.findAll()
     const settings = await service.setting.fetchAll()
     const rows = map(accounts, (item) => {
       return {
