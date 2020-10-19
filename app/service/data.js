@@ -4,6 +4,7 @@ const Service = require('egg').Service
 const marked = require('marked')
 const {map, filter} = require('lodash')
 const dayjs = require('dayjs')
+const url = require('url')
 const extension = {
   image: ['ico', 'bmp', 'gif', 'jpg', 'jpeg', 'jpe', 'jfif', 'tif', 'tiff', 'png', 'heic', 'webp'],
   audio: ['mp3', 'wma', 'flac', 'ape', 'wav', 'ogg', 'm4a'],
@@ -13,20 +14,6 @@ const extension = {
   zip: ['zip', 'rar', '7z', 'gz', 'tar'],
 }
 class DataService extends Service {
-  // async fetchCommon(query) {
-  //   const resp = {
-  //     item: [],
-  //     list: [],
-  //     content: '',
-  //     meta: [],
-  //   }
-  //   const {app, ctx, service} = this
-  //   const {account_id, path, preview, params} = query
-  //   const account = await app.model.Account.findOne({where: {id: account_id}})
-  //   const accessToken = await service.account.getAccessToken(account)
-  //   const items = await service.graph.getItemsByPath(accessToken, params)
-  //   return resp
-  // }
   async fetchShare(query) {
     const resp = {
       item: [],
@@ -120,30 +107,116 @@ class DataService extends Service {
       if (ctx.helper.in_array(ext, extension.txt)) {
         const rawContent = ctx.helper.getMime(info.name) === 'text/markdown' ? marked(content.data) : content.data
         resp.content = rawContent
-        return resp
-      }
-      ctx.redirect(info['@content.downloadUrl'])
-    } else {
-      let thumb = {}
-      if (!ctx.helper.isEmpty(info.thumbnails)) {
-        thumb = {
-          small: info.thumbnails[0].small,
-          medium: info.thumbnails[0].medium,
-          large: info.thumbnails[0].large,
-        }
-      }
-      resp.item = {
-        type: 0,
-        name: info.name,
-        size: ctx.helper.formatSize(Number(info.size)),
-        mime: info.file.mimeType,
-        time: dayjs(info.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
-        ext,
-        url: info['@content.downloadUrl'],
-        thumb,
       }
       return resp
     }
+    let thumb = {}
+    if (!ctx.helper.isEmpty(info.thumbnails)) {
+      thumb = {
+        small: info.thumbnails[0].small,
+        medium: info.thumbnails[0].medium,
+        large: info.thumbnails[0].large,
+      }
+    }
+    resp.item = {
+      type: 0,
+      name: info.name,
+      size: ctx.helper.formatSize(Number(info.size)),
+      mime: info.file.mimeType,
+      time: dayjs(info.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
+      ext,
+      url: info['@content.downloadUrl'],
+      thumb,
+    }
+    return resp
+  }
+  async fetchCommon(query) {
+    const resp = {
+      item: [],
+      list: [],
+      content: '',
+      meta: [],
+    }
+    const {app, ctx, service} = this
+    const {account_id, path, preview, params} = query
+    const account = await app.model.Account.findOne({where: {id: account_id}})
+    const accessToken = await service.account.getAccessToken(account)
+    let item = []
+    try {
+      item = await service.graph.getItemByPath(accessToken, path, params)
+    } catch (err) {
+      ctx.logger.error(err)
+      return resp
+    }
+
+    const items = await service.graph.getItemsByPath(accessToken, path, params)
+
+    // 目录
+    if (items.value.length > 0) {
+      const rows = map(items.value, (e) => {
+        const fileType = typeof e.file === 'undefined'
+        return {
+          type: Number(fileType),
+          name: e.name,
+          size: ctx.helper.formatSize(Number(e.size)),
+          mime: fileType ? '' : e.file.mimeType,
+          time: dayjs(e.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
+          ext: ctx.helper.getExtensionByName(e.name),
+        }
+      })
+      resp.list = filter(rows, (row) => {
+        return !ctx.helper.in_array(row.name, ['README.md', 'HEAD.md', '.password'], false)
+      })
+
+      if (item.file) {
+        return resp
+      }
+      resp.item = {
+        type: 1,
+        name: item.name,
+        size: ctx.helper.formatSize(Number(item.size)),
+        time: dayjs(item.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
+        childCount: item.folder.childCount,
+      }
+      if (items['@odata.nextLink']) {
+        const nextLinkQuery = url.parse(items['@odata.nextLink']).search
+        const nextPageParams = ctx.helper.getQueryVariable(nextLinkQuery)
+        resp.meta = {nextPageParams}
+      }
+
+      return resp
+    }
+    const ext = ctx.helper.getExtensionByName(item.name)
+    // 文件
+    if (preview) {
+      const content = await ctx.curl(item['@microsoft.graph.downloadUrl'], {
+        dataType: 'text',
+      })
+      if (ctx.helper.in_array(ext, extension.txt)) {
+        const rawContent = ctx.helper.getMime(item.name) === 'text/markdown' ? marked(content.data) : content.data
+        resp.content = rawContent
+      }
+      return resp
+    }
+    let thumb = {}
+    if (!ctx.helper.isEmpty(item.thumbnails)) {
+      thumb = {
+        small: item.thumbnails[0].small,
+        medium: item.thumbnails[0].medium,
+        large: item.thumbnails[0].large,
+      }
+    }
+    resp.item = {
+      type: 0,
+      name: item.name,
+      size: ctx.helper.formatSize(Number(item.size)),
+      mime: item.file.mimeType,
+      time: dayjs(item.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
+      ext,
+      url: item['@microsoft.graph.downloadUrl'],
+      thumb,
+    }
+    return resp
   }
 }
 

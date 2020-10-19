@@ -59,7 +59,7 @@ class GraphService extends Service {
       itemId: '',
       top: 20,
       skip: '',
-      expand: '',
+      expand: 'thumbnails',
     }
     const {accessToken, baseUrl, defaultVersion} = accessTokenObject
     const {itemId, top, skip, expand} = Object.assign({}, defaultParams, params || {})
@@ -73,17 +73,16 @@ class GraphService extends Service {
     return items
   }
 
-  async getItemsByPath(accessTokenObject, params) {
+  async getItemsByPath(accessTokenObject, path, params) {
     let endpoint = ''
     params = pickBy(params, identity)
     const defaultParams = {
-      path: '',
       top: 20,
       skip: '',
-      expand: '',
+      expand: 'thumbnails',
     }
     const {accessToken, baseUrl, defaultVersion} = accessTokenObject
-    let {path, top, skip, expand} = Object.assign({}, defaultParams, params || {})
+    const {top, skip, expand} = Object.assign({}, defaultParams, params || {})
     path = this.convertPath(path)
     if (path === '/' || path === '') {
       endpoint = '/me/drive/root/children'
@@ -91,8 +90,6 @@ class GraphService extends Service {
       path = this.ctx.helper.trim(path, '/')
       endpoint = `/me/drive/root:/${path}:/children`
     }
-    this.ctx.logger.info(path)
-    this.ctx.logger.info(endpoint)
     const client = this.initAuthenticatedClient(accessToken, baseUrl, defaultVersion)
     const items = await client.api(endpoint).top(top).skipToken(skip).expand(expand).get()
     return items
@@ -103,7 +100,7 @@ class GraphService extends Service {
     params = pickBy(params, identity)
     const defaultParams = {
       itemId: '',
-      expand: '',
+      expand: 'thumbnails',
     }
     const {accessToken, baseUrl, defaultVersion} = accessTokenObject
     const {itemId, expand} = Object.assign({}, defaultParams, params || {})
@@ -117,20 +114,20 @@ class GraphService extends Service {
     return item
   }
 
-  async getItemByPath(accessTokenObject, params) {
+  async getItemByPath(accessTokenObject, path, params) {
     let endpoint = ''
     params = pickBy(params, identity)
     const defaultParams = {
-      path: '',
-      expand: '',
+      expand: 'thumbnails',
     }
     const {accessToken, baseUrl, defaultVersion} = accessTokenObject
-    let {path, expand} = Object.assign({}, defaultParams, params || {})
-    if (path) {
-      path = this.convertPath(path)
-      endpoint = `/me/drive/root:/${path}`
-    } else {
+    const {expand} = Object.assign({}, defaultParams, params || {})
+    path = this.convertPath(path)
+    if (path === '/' || path === '') {
       endpoint = '/me/drive/root'
+    } else {
+      path = this.ctx.helper.trim(path, '/')
+      endpoint = `/me/drive/root:/${path}`
     }
     const client = this.initAuthenticatedClient(accessToken, baseUrl, defaultVersion)
     const item = await client.api(endpoint).expand(expand).get()
