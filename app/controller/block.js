@@ -13,6 +13,7 @@ class BlockController extends Controller {
         id: item.id,
         remark: item.remark,
         isMain: item.id === parseInt(settings.main),
+        type: item.type,
       }
     })
     ctx.body = service.response.success(rows)

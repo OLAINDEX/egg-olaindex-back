@@ -9,15 +9,7 @@ class ShareController extends Controller {
   async index() {
     const {ctx, service} = this
     const {path, preview, params} = ctx.request.body
-
-    // const data = await service.data.fetchShare({
-    //   account_id: 7,
-    //   path,
-    //   preview,
-    //   params,
-    // })
-    const data = await service.data.fetchCommon({
-      account_id: 6,
+    const data = await service.data.fetch(6, {
       path,
       preview,
       params,

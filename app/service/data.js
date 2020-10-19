@@ -14,7 +14,16 @@ const extension = {
   zip: ['zip', 'rar', '7z', 'gz', 'tar'],
 }
 class DataService extends Service {
-  async fetchShare(query) {
+  async fetch(id, query) {
+    const {app} = this
+    const account = await app.model.Account.findOne({where: {id}})
+    const type = account.type
+    if (type > 0) {
+      return await this.fetchCommon(account, query)
+    }
+    return await this.fetchShare(account, query)
+  }
+  async fetchShare(account, query) {
     const resp = {
       item: [],
       list: [],
@@ -22,18 +31,11 @@ class DataService extends Service {
       meta: [],
     }
     const {app, ctx, service} = this
-    let {account_id, path, preview, params} = query
-    const account = await app.model.Account.findOne({where: {id: account_id}})
+    let {path, preview, params} = query
     const token = account.raw
     path = token.share_folder + '/' + ctx.helper.trim(ctx.helper.defaultValue(path, '/'), '/')
     params = ctx.helper.defaultValue(params, {PageFirstRow: 1})
-    const data = await app.cache.get(
-      ctx.helper.hash(`share:list:${path}:${params.PageFirstRow}`),
-      async () => {
-        return await service.share.list(path, token, params)
-      },
-      300,
-    )
+    const data = await service.share.list(path, token, params)
     if (data.error) {
       if (preview) {
         return resp
@@ -55,13 +57,7 @@ class DataService extends Service {
       resp.list = filter(rows, (row) => {
         return !ctx.helper.in_array(row.name, ['README.md', 'HEAD.md', '.password'], false)
       })
-      const info = await app.cache.get(
-        ctx.helper.hash(`share:item:${path}`),
-        async () => {
-          return await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
-        },
-        300,
-      )
+      const info = await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
       if (info.file) {
         return resp
       }
@@ -83,13 +79,7 @@ class DataService extends Service {
 
       return resp
     }
-    const info = await app.cache.get(
-      ctx.helper.hash(`share:item:${path}`),
-      async () => {
-        return await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
-      },
-      300,
-    )
+    const info = await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
     if (!info.file) {
       return resp
     }
@@ -130,16 +120,15 @@ class DataService extends Service {
     }
     return resp
   }
-  async fetchCommon(query) {
+  async fetchCommon(account, query) {
     const resp = {
       item: [],
       list: [],
       content: '',
       meta: [],
     }
-    const {app, ctx, service} = this
-    const {account_id, path, preview, params} = query
-    const account = await app.model.Account.findOne({where: {id: account_id}})
+    const {ctx, service} = this
+    const {path, preview, params} = query
     const accessToken = await service.account.getAccessToken(account)
     let item = []
     try {
@@ -181,7 +170,14 @@ class DataService extends Service {
       if (items['@odata.nextLink']) {
         const nextLinkQuery = url.parse(items['@odata.nextLink']).search
         const nextPageParams = ctx.helper.getQueryVariable(nextLinkQuery)
-        resp.meta = {nextPageParams}
+        resp.meta = {
+          RowLimit: nextPageParams.$top,
+          nextPageParams: {
+            expand: nextPageParams.$expand,
+            skip: nextPageParams.$skipToken,
+            top: nextPageParams.$top,
+          },
+        }
       }
 
       return resp
