@@ -16,7 +16,7 @@ const extension = {
 class DataService extends Service {
   async fetch(id, query) {
     const {app} = this
-    const account = await app.model.Account.findOne({where: {id}})
+    const account = await app.model.Account.findByPk(id)
     const type = account.type
     if (type > 0) {
       return await this.fetchCommon(account, query)
