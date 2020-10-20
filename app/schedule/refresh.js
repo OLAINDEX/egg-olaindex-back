@@ -6,7 +6,7 @@ class ShareUpdate extends Subscription {
   // 通过 schedule 属性来设置定时任务的执行间隔等配置
   static get schedule() {
     return {
-      interval: '5m', // 间隔
+      interval: '10m', // 间隔
       type: 'all', // 指定所有的 worker 都需要执行
     }
   }
@@ -20,7 +20,6 @@ class ShareUpdate extends Subscription {
       const type = account.type
       if (type === TYPE_SHARE) {
         const share_uri = account.share_uri
-        ctx.logger.info(share_uri)
         const data = await service.share.parseShareUrlParams(share_uri)
         const token = await service.share.getAccessToken(data)
         const raw = {...data, ...token}
