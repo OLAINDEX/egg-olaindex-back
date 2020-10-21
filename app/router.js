@@ -21,6 +21,8 @@ module.exports = (app) => {
   router.post('/account/update', controller.account.update)
   router.post('/account/delete', controller.account.delete)
   router.post('/account/mark', controller.account.mark)
+  router.post('/account/config', controller.account.updateConfig)
+  router.get('/account/config', controller.account.fetchConfig)
 
   router.get('/setting', controller.setting.index)
   router.post('/setting', controller.setting.update)

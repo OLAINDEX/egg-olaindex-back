@@ -5,6 +5,23 @@ const {AuthorizationCode} = require('simple-oauth2')
 const {map} = require('lodash')
 
 class AccountController extends Controller {
+  async fetchConfig() {
+    const {app, ctx, service} = this
+    const params = ctx.request.query
+    const id = params.id
+    const account_hash = ctx.helper.hash(id)
+    const data = await app.model.Setting.findOne({where: {name: account_hash}})
+    ctx.body = service.response.success(data)
+  }
+  async updateConfig() {
+    const {app, ctx, service} = this
+    const params = ctx.request.body
+    const id = params.id
+    const account_hash = ctx.helper.hash(id)
+    const data = await app.model.Setting.findOne({where: {name: account_hash}})
+    data.update(params)
+    ctx.body = service.response.success(data)
+  }
   async list() {
     const {app, ctx, service} = this
     const accounts = await app.model.Account.findAll()
@@ -25,6 +42,35 @@ class AccountController extends Controller {
     const account = await app.model.Account.findByPk(id)
     ctx.body = service.response.success(account.toJSON())
   }
+
+  async update() {
+    const {app, ctx, service} = this
+    const params = ctx.request.body
+    const id = params.id
+    const account = await app.model.Account.findByPk(id)
+    account.update(params)
+    ctx.body = service.response.success(account.toJSON())
+  }
+
+  async delete() {
+    const {app, ctx, service} = this
+    const params = ctx.request.body
+    const id = params.id
+    const account = await app.model.Account.findByPk(id)
+    await account.destroy()
+    ctx.body = service.response.success()
+  }
+
+  async mark() {
+    const {ctx, service} = this
+    const params = ctx.request.body
+    const id = params.id
+    await service.setting.batchUpdate({
+      main: id,
+    })
+    ctx.body = service.response.success({main: id})
+  }
+
   async init() {
     const {app, ctx, service} = this
     const TYPE_SHARE = 0
@@ -79,34 +125,6 @@ class AccountController extends Controller {
     })
 
     ctx.body = service.response.success({type: params.type, redirect_uri: authorizationUri})
-  }
-
-  async update() {
-    const {app, ctx, service} = this
-    const params = ctx.request.body
-    const id = params.id
-    const account = await app.model.Account.findByPk(id)
-    account.update(params)
-    ctx.body = service.response.success(account.toJSON())
-  }
-
-  async delete() {
-    const {app, ctx, service} = this
-    const params = ctx.request.body
-    const id = params.id
-    const account = await app.model.Account.findByPk(id)
-    await account.destroy()
-    ctx.body = service.response.success()
-  }
-
-  async mark() {
-    const {ctx, service} = this
-    const params = ctx.request.body
-    const id = params.id
-    await service.setting.batchUpdate({
-      main: id,
-    })
-    ctx.body = service.response.success({main: id})
   }
 }
 
