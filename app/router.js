@@ -16,6 +16,7 @@ module.exports = (app) => {
   router.get('/init/load', controller.init.load)
 
   router.get('/account/list', controller.account.list)
+  router.get('/account/view', controller.account.view)
   router.post('/account/init', controller.account.init)
   router.post('/account/update', controller.account.update)
   router.post('/account/delete', controller.account.delete)

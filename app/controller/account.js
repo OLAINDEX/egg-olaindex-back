@@ -17,6 +17,14 @@ class AccountController extends Controller {
     })
     ctx.body = service.response.success(rows)
   }
+
+  async view() {
+    const {app, ctx, service} = this
+    const params = ctx.request.query
+    const id = params.id
+    const account = await app.model.Account.findByPk(id)
+    ctx.body = service.response.success(account.toJSON())
+  }
   async init() {
     const {app, ctx, service} = this
     const TYPE_SHARE = 0
@@ -77,9 +85,7 @@ class AccountController extends Controller {
     const {app, ctx, service} = this
     const params = ctx.request.body
     const id = params.id
-    const account = await app.model.Account.findOne({
-      where: {id},
-    })
+    const account = await app.model.Account.findByPk(id)
     account.update(params)
     ctx.body = service.response.success(account.toJSON())
   }
