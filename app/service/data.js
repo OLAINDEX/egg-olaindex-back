@@ -40,7 +40,21 @@ class DataService extends Service {
     const token = account.raw
     const root = ctx.helper.trim(ctx.helper.defaultValue(config.root, ''), '/')
     const start = token.share_folder + (root ? '/' + root : '')
-    path = start + '/' + ctx.helper.trim(ctx.helper.defaultValue(path, '/'), '/')
+    const hide = ctx.helper.defaultValue(config.hide, '').split('|')
+    ctx.logger.info(hide)
+    const querypath = ctx.helper.trim(ctx.helper.defaultValue(path, '/'), '/')
+    for (const i in hide) {
+      const pattern = ctx.helper.trim(hide[i], '/')
+      if (ctx.helper.isEmpty(pattern)) {
+        break
+      }
+      const regx = new RegExp(`^${pattern}`)
+      if (regx.test(querypath)) {
+        return resp
+      }
+    }
+
+    path = start + '/' + querypath
     params = ctx.helper.defaultValue(params, {PageFirstRow: 1})
     const data = await service.share.list(path, token, params)
     if (data.error) {
@@ -62,7 +76,19 @@ class DataService extends Service {
         }
       })
       resp.list = filter(rows, (row) => {
-        return !ctx.helper.in_array(row.name, ['README.md', 'HEAD.md', '.password'], false)
+        let isHide = false
+        for (const i in hide) {
+          const pattern = ctx.helper.trim(hide[i], '/')
+          if (ctx.helper.isEmpty(pattern)) {
+            break
+          }
+          const regx = new RegExp(`^${pattern}`)
+          if (regx.test(ctx.helper.trim(querypath + '/' + row.name, '/'))) {
+            isHide = true
+            break
+          }
+        }
+        return !isHide && !ctx.helper.in_array(row.name, ['README.md', 'HEAD.md', '.password'], false)
       })
       const info = await service.share.item(data.ListData.CurrentFolderSpItemUrl, token)
       if (info.file) {
@@ -137,6 +163,17 @@ class DataService extends Service {
     const {ctx, service} = this
     let {path, preview, params} = query
     const root = ctx.helper.trim(ctx.helper.defaultValue(config.root, ''), '/')
+    const hide = ctx.helper.defaultValue(config.hide, '').split('|')
+    for (const i in hide) {
+      const pattern = ctx.helper.trim(hide[i], '/')
+      if (ctx.helper.isEmpty(pattern)) {
+        break
+      }
+      const regx = new RegExp(`^${pattern}`)
+      if (regx.test(path)) {
+        return resp
+      }
+    }
     path = (root ? '/' + root : '') + path
     const accessToken = await service.account.getAccessToken(account)
     let item = []
@@ -163,7 +200,19 @@ class DataService extends Service {
         }
       })
       resp.list = filter(rows, (row) => {
-        return !ctx.helper.in_array(row.name, ['README.md', 'HEAD.md', '.password'], false)
+        let isHide = false
+        for (const i in hide) {
+          const pattern = ctx.helper.trim(hide[i], '/')
+          if (ctx.helper.isEmpty(pattern)) {
+            break
+          }
+          const regx = new RegExp(`^${pattern}`)
+          if (regx.test(ctx.helper.trim(path + '/' + row.name, '/'))) {
+            isHide = true
+            break
+          }
+        }
+        return !isHide && !ctx.helper.in_array(row.name, ['README.md', 'HEAD.md', '.password'], false)
       })
 
       if (item.file) {
