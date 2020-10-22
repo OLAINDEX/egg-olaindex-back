@@ -27,7 +27,7 @@ module.exports = (appInfo) => {
   }
 
   // add your middleware config here
-  config.middleware = []
+  config.middleware = ['notfoundHandler']
 
   config.jwt = {
     secret: '0eMM1Y0p5L',
@@ -79,30 +79,6 @@ module.exports = (appInfo) => {
     },
   }
 
-  const oauth2 = {
-    client: {
-      id: '81c0ba72-5ff2-4d48-b3dc-e2d699a2e4fd',
-      secret: '0eMM1Y0p5L-s64~Dd3VkS5TY3HPYv~uO5-',
-    },
-    auth: {
-      tokenHost: 'https://login.microsoftonline.com/common/',
-      authorizePath: 'oauth2/v2.0/authorize',
-      tokenPath: 'oauth2/v2.0/token',
-    },
-  }
-
-  const oauth2_cn = {
-    client: {
-      id: '833d0c0f-9351-44b3-b020-200084b49706',
-      secret: 'MlxI9yxQP-s6vK6xYz-_eMl8_MN~4yuvl5',
-    },
-    auth: {
-      tokenHost: 'https://login.partner.microsoftonline.cn/common/',
-      authorizePath: 'oauth2/authorize',
-      tokenPath: 'oauth2/token',
-    },
-  }
-
   const view = {
     defaultViewEngine: 'nunjucks',
     mapping: {
@@ -137,8 +113,6 @@ module.exports = (appInfo) => {
     ...userConfig,
     cache,
     view,
-    oauth2,
-    oauth2_cn,
     cors,
     sequelize,
   }

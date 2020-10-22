@@ -15,15 +15,20 @@ const extension = {
 }
 class DataService extends Service {
   async fetch(id, query) {
-    const {app} = this
+    const {app, ctx} = this
     const account = await app.model.Account.findByPk(id)
     const type = account.type
+    const account_hash = ctx.helper.hash(id)
+    const config = ctx.helper.defaultValue(await app.model.Setting.findOne({where: {name: account_hash}}), {
+      name: account_hash,
+      value: {},
+    }).value
     if (type > 0) {
-      return await this.fetchCommon(account, query)
+      return await this.fetchCommon(account, query, config)
     }
-    return await this.fetchShare(account, query)
+    return await this.fetchShare(account, query, config)
   }
-  async fetchShare(account, query) {
+  async fetchShare(account, query, config) {
     const resp = {
       item: [],
       list: [],
@@ -33,7 +38,9 @@ class DataService extends Service {
     const {app, ctx, service} = this
     let {path, preview, params} = query
     const token = account.raw
-    path = token.share_folder + '/' + ctx.helper.trim(ctx.helper.defaultValue(path, '/'), '/')
+    const root = ctx.helper.trim(ctx.helper.defaultValue(config.root, ''), '/')
+    const start = token.share_folder + (root ? '/' + root : '')
+    path = start + '/' + ctx.helper.trim(ctx.helper.defaultValue(path, '/'), '/')
     params = ctx.helper.defaultValue(params, {PageFirstRow: 1})
     const data = await service.share.list(path, token, params)
     if (data.error) {
@@ -66,7 +73,7 @@ class DataService extends Service {
         name: info.name,
         size: ctx.helper.formatSize(Number(info.size)),
         time: dayjs(info.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
-        childCount: info.folder.childCount,
+        childCount: resp.list.length,
       }
 
       const nextPageParams = ctx.helper.getQueryVariable(data.ListData.NextHref)
@@ -120,7 +127,7 @@ class DataService extends Service {
     }
     return resp
   }
-  async fetchCommon(account, query) {
+  async fetchCommon(account, query, config) {
     const resp = {
       item: [],
       list: [],
@@ -128,7 +135,9 @@ class DataService extends Service {
       meta: [],
     }
     const {ctx, service} = this
-    const {path, preview, params} = query
+    let {path, preview, params} = query
+    const root = ctx.helper.trim(ctx.helper.defaultValue(config.root, ''), '/')
+    path = (root ? '/' + root : '') + path
     const accessToken = await service.account.getAccessToken(account)
     let item = []
     try {
@@ -165,7 +174,7 @@ class DataService extends Service {
         name: item.name,
         size: ctx.helper.formatSize(Number(item.size)),
         time: dayjs(item.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
-        childCount: item.folder.childCount,
+        childCount: resp.list.length,
       }
       if (items['@odata.nextLink']) {
         const nextLinkQuery = url.parse(items['@odata.nextLink']).search

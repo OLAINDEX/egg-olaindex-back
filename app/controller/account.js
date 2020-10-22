@@ -10,16 +10,21 @@ class AccountController extends Controller {
     const params = ctx.request.query
     const id = params.id
     const account_hash = ctx.helper.hash(id)
-    const data = await app.model.Setting.findOne({where: {name: account_hash}})
-    ctx.body = service.response.success(data)
+    const config = ctx.helper.defaultValue(await app.model.Setting.findOne({where: {name: account_hash}}), {
+      name: account_hash,
+      value: {},
+    }).value
+    ctx.body = service.response.success(config)
   }
   async updateConfig() {
-    const {app, ctx, service} = this
+    const {ctx, service} = this
     const params = ctx.request.body
     const id = params.id
     const account_hash = ctx.helper.hash(id)
-    const data = await app.model.Setting.findOne({where: {name: account_hash}})
-    data.update(params)
+    const post = {}
+    post[account_hash] = params
+    ctx.logger.info(post)
+    const data = await service.setting.batchUpdate(post)
     ctx.body = service.response.success(data)
   }
   async list() {
