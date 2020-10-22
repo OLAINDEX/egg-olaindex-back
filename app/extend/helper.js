@@ -108,6 +108,14 @@ const in_array = (needle, haystack, argStrict) => {
   return false
 }
 
+const array_key_exists = (key, search) => {
+  if (!search || (search.constructor !== Array && search.constructor !== Object)) {
+    return false
+  }
+
+  return key in search
+}
+
 const hash = (key, prefix = 'eggjs') => {
   return crypto
     .createHash('md5')
@@ -187,6 +195,7 @@ module.exports = {
   getMime,
   trim,
   in_array,
+  array_key_exists,
   hash,
   defaultValue,
   getQueryVariable,

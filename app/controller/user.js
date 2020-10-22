@@ -33,6 +33,12 @@ class UserController extends Controller {
       ctx.body = service.response.fail('用户名或密码错误', 400)
     }
   }
+  async profile() {
+    const {ctx, app, service} = this
+    const {id} = ctx.request.query
+    const user = await app.model.User.findByPk(id)
+    ctx.body = service.response.success(user.toJSON())
+  }
 }
 
 module.exports = UserController
