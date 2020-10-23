@@ -87,18 +87,6 @@ class DataService extends Service {
     if (data.ListData.Row.length > 0) {
       // 文件夹
       const rows = map(data.ListData.Row, (e) => {
-        let isEncrypt = false
-        for (const i in encrypt_arr) {
-          const pattern = ctx.helper.trim(encrypt_arr[i], '/')
-          if (ctx.helper.isEmpty(pattern)) {
-            break
-          }
-          const regx = new RegExp(`^${pattern}`)
-          if (regx.test(ctx.helper.trim(querypath + '/' + e.LinkFilename, '/'))) {
-            isEncrypt = true
-            break
-          }
-        }
         return {
           type: Number(e.FSObjType),
           name: e.LinkFilename,
@@ -106,7 +94,6 @@ class DataService extends Service {
           mime: Number(e.FSObjType) ? '' : ctx.helper.getMime(e.LinkFilename),
           time: dayjs(e.SMLastModifiedDate).format('YYYY-MM-DD HH:mm:ss'),
           ext: e['.fileType'],
-          encrypt: isEncrypt,
         }
       })
       resp.list = filter(rows, (row) => {
@@ -198,6 +185,7 @@ class DataService extends Service {
     }
     const {ctx, service} = this
     let {path, preview, password, params} = query
+    const queryPath = ctx.helper.trim(ctx.helper.defaultValue(path, ''), '/')
     const root = ctx.helper.trim(ctx.helper.defaultValue(config.root, ''), '/')
     const hide = ctx.helper.defaultValue(config.hide, '').split('|')
     const encrypt = ctx.helper.defaultValue(config.encrypt, '').split('|')
@@ -211,8 +199,7 @@ class DataService extends Service {
       }
       const encrypt_pass = ctx.helper.defaultValue(encrypt[i].split(':')[1], '')
       const regx = new RegExp(`^${pattern}`)
-      if (regx.test(path)) {
-        ctx.logger.info(password, encrypt_pass)
+      if (regx.test(queryPath)) {
         if (encrypt_pass && password === encrypt_pass) {
           break
         }
@@ -228,12 +215,11 @@ class DataService extends Service {
         break
       }
       const regx = new RegExp(`^${pattern}`)
-      if (regx.test(path)) {
+      if (regx.test(queryPath)) {
         return resp
       }
     }
-    path = (root ? '/' + root : '') + '/' + path
-    ctx.logger.info(path)
+    path = ctx.helper.trim((root ? root : '') + '/' + queryPath, '/')
     const accessToken = await service.account.getAccessToken(account)
     let item = []
     try {
@@ -249,18 +235,6 @@ class DataService extends Service {
     if (items.value.length > 0) {
       const rows = map(items.value, (e) => {
         const fileType = typeof e.file === 'undefined'
-        let isEncrypt = false
-        for (const i in encrypt_arr) {
-          const pattern = ctx.helper.trim(encrypt_arr[i], '/')
-          if (ctx.helper.isEmpty(pattern)) {
-            break
-          }
-          const regx = new RegExp(`^${pattern}`)
-          if (regx.test(ctx.helper.trim(path + '/' + e.name, '/'))) {
-            isEncrypt = true
-            break
-          }
-        }
         return {
           type: Number(fileType),
           name: e.name,
@@ -268,7 +242,6 @@ class DataService extends Service {
           mime: fileType ? '' : e.file.mimeType,
           time: dayjs(e.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
           ext: ctx.helper.getExtensionByName(e.name),
-          encrypt: isEncrypt,
         }
       })
       resp.list = filter(rows, (row) => {
