@@ -30,13 +30,13 @@ class DataService extends Service {
   }
   async fetchShare(account, query, config) {
     const resp = {
-      item: [],
+      item: {},
       list: [],
       content: '',
-      meta: [],
+      meta: {},
     }
     const {app, ctx, service} = this
-    let {path, preview, params} = query
+    let {path, preview, password, params} = query
     const token = account.raw
     const root = ctx.helper.trim(ctx.helper.defaultValue(config.root, ''), '/')
     const start = token.share_folder + (root ? '/' + root : '')
@@ -44,13 +44,24 @@ class DataService extends Service {
     const encrypt = ctx.helper.defaultValue(config.encrypt, '').split('|')
     const querypath = ctx.helper.trim(ctx.helper.defaultValue(path, '/'), '/')
     const encrypt_arr = []
+    let pathIsEncrypt = false
     for (const i in encrypt) {
       const encrypt_path = encrypt[i].split(':')[0]
       const pattern = ctx.helper.trim(encrypt_path, '/')
       if (ctx.helper.isEmpty(pattern)) {
         break
       }
-      // const encrypt_pass = ctx.helper.defaultValue(encrypt[i].split(':')[1], '')
+      const encrypt_pass = ctx.helper.defaultValue(encrypt[i].split(':')[1], '')
+      const regx = new RegExp(`^${pattern}`)
+      if (regx.test(ctx.helper.trim(querypath, '/'))) {
+        ctx.logger.info(password, encrypt_pass)
+        if (encrypt_pass && password === encrypt_pass) {
+          break
+        }
+        pathIsEncrypt = true
+        resp.item = {encrypt: true}
+        return resp
+      }
       encrypt_arr.push(encrypt_path)
     }
     for (const i in hide) {
@@ -123,6 +134,7 @@ class DataService extends Service {
         size: ctx.helper.formatSize(Number(info.size)),
         time: dayjs(info.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
         childCount: resp.list.length,
+        encrypt: pathIsEncrypt,
       }
 
       const nextPageParams = ctx.helper.getQueryVariable(data.ListData.NextHref)
@@ -173,29 +185,41 @@ class DataService extends Service {
       ext,
       url: info['@content.downloadUrl'],
       thumb,
+      encrypt: pathIsEncrypt,
     }
     return resp
   }
   async fetchCommon(account, query, config) {
     const resp = {
-      item: [],
+      item: {},
       list: [],
       content: '',
-      meta: [],
+      meta: {},
     }
     const {ctx, service} = this
-    let {path, preview, params} = query
+    let {path, preview, password, params} = query
     const root = ctx.helper.trim(ctx.helper.defaultValue(config.root, ''), '/')
     const hide = ctx.helper.defaultValue(config.hide, '').split('|')
     const encrypt = ctx.helper.defaultValue(config.encrypt, '').split('|')
     const encrypt_arr = []
+    let pathIsEncrypt = false
     for (const i in encrypt) {
       const encrypt_path = encrypt[i].split(':')[0]
       const pattern = ctx.helper.trim(encrypt_path, '/')
       if (ctx.helper.isEmpty(pattern)) {
         break
       }
-      // const encrypt_pass = ctx.helper.defaultValue(encrypt[i].split(':')[1], '')
+      const encrypt_pass = ctx.helper.defaultValue(encrypt[i].split(':')[1], '')
+      const regx = new RegExp(`^${pattern}`)
+      if (regx.test(path)) {
+        ctx.logger.info(password, encrypt_pass)
+        if (encrypt_pass && password === encrypt_pass) {
+          break
+        }
+        pathIsEncrypt = true
+        resp.item = {encrypt: true}
+        return resp
+      }
       encrypt_arr.push(encrypt_path)
     }
     for (const i in hide) {
@@ -208,7 +232,8 @@ class DataService extends Service {
         return resp
       }
     }
-    path = (root ? '/' + root : '') + path
+    path = (root ? '/' + root : '') + '/' + path
+    ctx.logger.info(path)
     const accessToken = await service.account.getAccessToken(account)
     let item = []
     try {
@@ -271,6 +296,7 @@ class DataService extends Service {
         size: ctx.helper.formatSize(Number(item.size)),
         time: dayjs(item.lastModifiedDateTime).format('YYYY-MM-DD HH:mm:ss'),
         childCount: resp.list.length,
+        encrypt: pathIsEncrypt,
       }
       if (items['@odata.nextLink']) {
         const nextLinkQuery = url.parse(items['@odata.nextLink']).search
@@ -316,6 +342,7 @@ class DataService extends Service {
       ext,
       url: item['@microsoft.graph.downloadUrl'],
       thumb,
+      encrypt: pathIsEncrypt,
     }
     return resp
   }

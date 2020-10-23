@@ -4,11 +4,12 @@ const Controller = require('egg').Controller
 class ShareController extends Controller {
   async index() {
     const {ctx, service} = this
-    const {id, path, preview, params} = ctx.request.body
+    const {id, path, preview, password, params} = ctx.request.body
     const data = await service.data.fetch(id, {
       path,
       preview,
       params,
+      password,
     })
     ctx.body = service.response.success(data)
     return
