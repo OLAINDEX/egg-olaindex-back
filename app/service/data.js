@@ -79,6 +79,7 @@ class DataService extends Service {
     params = ctx.helper.defaultValue(params, {PageFirstRow: 1})
     const data = await service.share.list(path, token, params)
     if (data.error) {
+      await service.account.refreshCookie(account)
       if (preview) {
         return resp
       }

@@ -71,6 +71,23 @@ class AccountService extends Service {
     }
     return {accessToken: accessToken.token.access_token, baseUrl}
   }
+
+  async refreshCookie(account) {
+    const {service} = this
+    const TYPE_SHARE = 0
+    // const TYPE_CN = 1
+    // const TYPE_COM = 2
+    const type = account.type
+    if (type === TYPE_SHARE) {
+      const share_uri = account.share_uri
+      const data = await service.share.parseShareUrlParams(share_uri)
+      const token = await service.share.getAccessToken(data)
+      const raw = {...data, ...token}
+      await account.update({raw, access_token: token.accessToken})
+      return raw
+    }
+    return {}
+  }
 }
 
 module.exports = AccountService

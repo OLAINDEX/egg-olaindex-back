@@ -37,6 +37,23 @@ class UserController extends Controller {
     const {ctx, app, service} = this
     const {id} = ctx.request.query
     const user = await app.model.User.findByPk(id)
+    if (!user) {
+      ctx.body = service.response.fail('用户不存在')
+      return
+    }
+    ctx.body = service.response.success(user.toJSON())
+  }
+
+  async update() {
+    const {ctx, app, service} = this
+    const {id} = ctx.request.query
+    const {data} = ctx.request.body
+    const user = await app.model.User.findByPk(id)
+    if (!user) {
+      ctx.body = service.response.fail('用户不存在')
+      return
+    }
+    user.update(data)
     ctx.body = service.response.success(user.toJSON())
   }
 }

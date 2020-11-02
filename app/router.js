@@ -12,6 +12,7 @@ module.exports = (app) => {
 
   router.post('/user/login', controller.user.login)
   router.get('/user', controller.user.profile)
+  router.post('/user', controller.user.profile)
 
   router.post('/init', controller.init.index)
   router.get('/init/check', controller.init.check)
