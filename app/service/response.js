@@ -15,8 +15,8 @@ class ResponseService extends Service {
   success(data) {
     return this.buildResponse(data)
   }
-  fail(errMsg, errCode = 400) {
-    return this.buildResponse([], errCode, errMsg)
+  fail(errMsg, errCode = 400, data = []) {
+    return this.buildResponse(data, errCode, errMsg)
   }
 }
 
