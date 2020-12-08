@@ -45,6 +45,16 @@ class DataService extends Service {
     const querypath = ctx.helper.trim(ctx.helper.defaultValue(path, '/'), '/')
     const encrypt_arr = []
     let pathIsEncrypt = false
+    for (const i in hide) {
+      const pattern = ctx.helper.trim(hide[i], '/')
+      if (ctx.helper.isEmpty(pattern)) {
+        break
+      }
+      const regx = new RegExp(`^${pattern}`)
+      if (regx.test(querypath)) {
+        return resp
+      }
+    }
     for (const i in encrypt) {
       const encrypt_path = encrypt[i].split(':')[0]
       const pattern = ctx.helper.trim(encrypt_path, '/')
@@ -63,16 +73,6 @@ class DataService extends Service {
         return resp
       }
       encrypt_arr.push(encrypt_path)
-    }
-    for (const i in hide) {
-      const pattern = ctx.helper.trim(hide[i], '/')
-      if (ctx.helper.isEmpty(pattern)) {
-        break
-      }
-      const regx = new RegExp(`^${pattern}`)
-      if (regx.test(querypath)) {
-        return resp
-      }
     }
 
     path = start + '/' + querypath
@@ -105,7 +105,7 @@ class DataService extends Service {
             break
           }
           const regx = new RegExp(`^${pattern}`)
-          if (regx.test(ctx.helper.trim(querypath + '/' + row.name, '/'))) {
+          if (regx.test(ctx.helper.trim('/' + row.name, '/'))) {
             isHide = true
             break
           }
@@ -192,6 +192,16 @@ class DataService extends Service {
     const encrypt = ctx.helper.defaultValue(config.encrypt, '').split('|')
     const encrypt_arr = []
     let pathIsEncrypt = false
+    for (const i in hide) {
+      const pattern = ctx.helper.trim(hide[i], '/')
+      if (ctx.helper.isEmpty(pattern)) {
+        break
+      }
+      const regx = new RegExp(`^${pattern}`)
+      if (regx.test(queryPath)) {
+        return resp
+      }
+    }
     for (const i in encrypt) {
       const encrypt_path = encrypt[i].split(':')[0]
       const pattern = ctx.helper.trim(encrypt_path, '/')
@@ -210,16 +220,7 @@ class DataService extends Service {
       }
       encrypt_arr.push(encrypt_path)
     }
-    for (const i in hide) {
-      const pattern = ctx.helper.trim(hide[i], '/')
-      if (ctx.helper.isEmpty(pattern)) {
-        break
-      }
-      const regx = new RegExp(`^${pattern}`)
-      if (regx.test(queryPath)) {
-        return resp
-      }
-    }
+
     path = ctx.helper.trim((root ? root : '') + '/' + queryPath, '/')
     const accessToken = await service.account.getAccessToken(account)
     let item = []
@@ -253,7 +254,7 @@ class DataService extends Service {
             break
           }
           const regx = new RegExp(`^${pattern}`)
-          if (regx.test(ctx.helper.trim(path + '/' + row.name, '/'))) {
+          if (regx.test(ctx.helper.trim('/' + row.name, '/'))) {
             isHide = true
             break
           }
