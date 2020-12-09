@@ -50,6 +50,7 @@ class AuthController extends Controller {
         refresh_token: token.refresh_token,
         expires_on: token.expires_on,
         raw: token,
+        config: {},
       })
     } catch (error) {
       ctx.logger.error('Access Token Error', error.message)

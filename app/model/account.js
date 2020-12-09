@@ -61,6 +61,25 @@ module.exports = (app) => {
         allowNull: false,
         defaultValue: '',
       },
+      config: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        defaultValue: '',
+        set(val) {
+          if (typeof val !== 'string') {
+            this.setDataValue('config', JSON.stringify(val))
+          } else {
+            this.setDataValue('config', val)
+          }
+        },
+        get() {
+          const value = this.getDataValue('config')
+          if (checkIsJSON(value)) {
+            return JSON.parse(value)
+          }
+          return value
+        },
+      },
       raw: {
         type: DataTypes.TEXT,
         allowNull: false,

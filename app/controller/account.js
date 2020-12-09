@@ -9,23 +9,16 @@ class AccountController extends Controller {
     const {app, ctx, service} = this
     const params = ctx.request.query
     const id = params.id
-    const account_hash = ctx.helper.hash(id)
-    const config = ctx.helper.defaultValue(await app.model.Setting.findOne({where: {name: account_hash}}), {
-      name: account_hash,
-      value: {},
-    }).value
-    ctx.body = service.response.success(config)
+    const account = await app.model.Account.findByPk(id)
+    ctx.body = service.response.success(account.config)
   }
   async updateConfig() {
-    const {ctx, service} = this
+    const {app, ctx, service} = this
     const params = ctx.request.body
     const id = params.id
-    const account_hash = ctx.helper.hash(id)
-    const post = {}
-    post[account_hash] = params
-    ctx.logger.info(post)
-    const data = await service.setting.batchUpdate(post)
-    ctx.body = service.response.success(data)
+    const account = await app.model.Account.findByPk(id)
+    await account.update(params)
+    ctx.body = service.response.success(params)
   }
   async list() {
     const {app, ctx, service} = this
@@ -66,7 +59,7 @@ class AccountController extends Controller {
     ctx.body = service.response.success()
   }
 
-  async mark() {
+  async setMain() {
     const {ctx, service} = this
     const params = ctx.request.body
     const id = params.id

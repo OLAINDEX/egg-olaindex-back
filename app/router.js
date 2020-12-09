@@ -28,12 +28,11 @@ module.exports = (app) => {
   router.post('/account/init', jwt, controller.account.init)
   router.post('/account/update', jwt, controller.account.update)
   router.post('/account/delete', jwt, controller.account.delete)
-  router.post('/account/mark', jwt, controller.account.mark)
+  router.post('/account/setMain', jwt, controller.account.setMain)
   router.post('/account/config', jwt, controller.account.updateConfig)
   router.get('/account/config', jwt, controller.account.fetchConfig)
 
   router.get('/setting', jwt, controller.setting.index)
   router.post('/setting', jwt, controller.setting.update)
   router.get('/cache/clear', jwt, controller.cache.clear)
-  router.get('/t', controller.test.index)
 }
