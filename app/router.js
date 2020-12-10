@@ -29,6 +29,7 @@ module.exports = (app) => {
   router.post('/account/update', jwt, controller.account.update)
   router.post('/account/delete', jwt, controller.account.delete)
   router.post('/account/setMain', jwt, controller.account.setMain)
+  router.post('/account/setImageHost', jwt, controller.account.setImageHost)
   router.post('/account/config', jwt, controller.account.updateConfig)
   router.get('/account/config', jwt, controller.account.fetchConfig)
 

@@ -27,6 +27,7 @@ class AccountController extends Controller {
     const rows = map(accounts, (item) => {
       return {
         isMain: item.id === parseInt(settings.main),
+        isImageHost: item.id === parseInt(settings.img_host_account),
         ...item.toJSON(),
       }
     })
@@ -67,6 +68,16 @@ class AccountController extends Controller {
       main: id,
     })
     ctx.body = service.response.success({main: id})
+  }
+
+  async setImageHost() {
+    const {ctx, service} = this
+    const params = ctx.request.body
+    const id = params.id
+    await service.setting.batchUpdate({
+      img_host_account: id,
+    })
+    ctx.body = service.response.success({img_host_account: id})
   }
 
   async init() {
